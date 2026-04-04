@@ -379,7 +379,7 @@ class _MilkRunDialogState extends ConsumerState<_MilkRunDialog> {
     } catch (_) {}
     if (mounted) setState(() => _isSearching = false);
     _isSelectingSuggestion = false;
-    CustomToast.error(msg: "Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com/home to place an order, and we will ship it to you.");
+    CustomToast.error(msg: "Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com to place an order, and we will ship it to you.");
   }
 
   /// Update or create the user's address in the backend
@@ -449,7 +449,7 @@ class _MilkRunDialogState extends ConsumerState<_MilkRunDialog> {
       CustomToast.success(msg: 'Found your route');
     } else {
       setState(() => _isSearching = false);
-      CustomToast.error(msg: "Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com/home to place an order, and we will ship it to you.");
+      CustomToast.error(msg: "Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com to place an order, and we will ship it to you.");
     }
   }
 
@@ -489,7 +489,7 @@ class _MilkRunDialogState extends ConsumerState<_MilkRunDialog> {
         _persistSelection();
         CustomToast.success(msg: 'Found your route');
       } else {
-        CustomToast.error(msg: "Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com/home to place an order, and we will ship it to you.");
+        CustomToast.error(msg: "Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com to place an order, and we will ship it to you.");
       }
     } catch (_) {
       CustomToast.error(msg: 'Unable to get your location.');

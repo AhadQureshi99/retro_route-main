@@ -1136,13 +1136,13 @@ class _FindMilkRunScreenState extends State<FindMilkRunScreen> {
               children: [
                 const TextSpan(text: "Your city is not in the delivery zone. We are working on it, but for now, please visit "),
                 TextSpan(
-                  text: "www.retrorouteco.com/home",
+                  text: "www.retrorouteco.com",
                   style: const TextStyle(
                     color: Color(0xFFE8751A),
                     decoration: TextDecoration.underline,
                   ),
                   recognizer: TapGestureRecognizer()..onTap = () {
-                    launchUrl(Uri.parse('https://www.retrorouteco.com/home'), mode: LaunchMode.externalApplication);
+                    launchUrl(Uri.parse('https://www.retrorouteco.com/?from=app'), mode: LaunchMode.externalApplication);
                   },
                 ),
                 const TextSpan(text: " to place an order, and we will ship it to you."),
@@ -2147,13 +2147,13 @@ class _FindMilkRunContentState extends State<FindMilkRunContent> {
               children: [
                 const TextSpan(text: "Your city is not in the delivery zone. We are working on it, but for now, please visit "),
                 TextSpan(
-                  text: "www.retrorouteco.com/home",
+                  text: "www.retrorouteco.com",
                   style: const TextStyle(
                     color: Color(0xFFE8751A),
                     decoration: TextDecoration.underline,
                   ),
                   recognizer: TapGestureRecognizer()..onTap = () {
-                    launchUrl(Uri.parse('https://www.retrorouteco.com/home'), mode: LaunchMode.externalApplication);
+                    launchUrl(Uri.parse('https://www.retrorouteco.com/?from=app'), mode: LaunchMode.externalApplication);
                   },
                 ),
                 const TextSpan(text: " to place an order, and we will ship it to you."),

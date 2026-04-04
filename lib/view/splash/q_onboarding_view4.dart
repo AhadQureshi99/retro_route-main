@@ -201,7 +201,7 @@ class _BookMyStopContentState extends State<BookMyStopContent> {
     _isSelectingSuggestion = false;
     CustomToast.error(
         msg:
-            'Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com/home to place an order, and we will ship it to you.');
+            'Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com to place an order, and we will ship it to you.');
   }
 
   void _handleAddressSearch() {
@@ -226,7 +226,7 @@ class _BookMyStopContentState extends State<BookMyStopContent> {
       setState(() => _isSearching = false);
       CustomToast.error(
           msg:
-              'Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com/home to place an order, and we will ship it to you.');
+              'Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com to place an order, and we will ship it to you.');
     }
   }
 
@@ -277,7 +277,7 @@ class _BookMyStopContentState extends State<BookMyStopContent> {
       } else {
         CustomToast.error(
             msg:
-                'Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com/home to place an order, and we will ship it to you.');
+                'Your city is not in the delivery zone. We are working on it, but for now, please visit www.retrorouteco.com to place an order, and we will ship it to you.');
       }
     } catch (_) {
       CustomToast.error(msg: 'Unable to get your location.');

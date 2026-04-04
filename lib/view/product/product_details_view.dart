@@ -936,30 +936,27 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 22.w,
-                              height: 22.w,
-                              decoration:  BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.08),
-                                shape: BoxShape.circle,
+                            Padding(
+                              padding: EdgeInsets.only(top: 2.h),
+                              child: Container(
+                                width: 22.w,
+                                height: 22.w,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.08),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(Icons.check, size: 13.sp, color: AppColors.primary),
                               ),
-                              child: Icon(Icons.check, size: 13.sp, color: AppColors.primary),
                             ),
-                            SizedBox(width: 12.w),
+                            SizedBox(width: 10.w),
                             Expanded(
-                              child: Html(
-                                data: feature,
-                                style: {
-                                  "body": Style(
-                                    margin: Margins.zero,
-                                    padding: HtmlPaddings.zero,
-                                    fontSize: FontSize(14.sp),
-                                    color: const Color(0xff1f2937),
-                                    fontFamily: GoogleFonts.inter().fontFamily,
-                                  ),
-                                  "b": Style(fontWeight: FontWeight.w700),
-                                  "strong": Style(fontWeight: FontWeight.w700),
-                                },
+                              child: Text(
+                                feature.replaceAll(RegExp(r'<[^>]*>'), ''),
+                                style: GoogleFonts.inter(
+                                  fontSize: 14.sp,
+                                  color: const Color(0xff1f2937),
+                                  height: 1.4,
+                                ),
                               ),
                             ),
                           ],
