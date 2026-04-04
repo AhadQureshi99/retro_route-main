@@ -951,7 +951,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                             SizedBox(width: 10.w),
                             Expanded(
                               child: Text(
-                                feature.replaceAll(RegExp(r'<[^>]*>'), ''),
+                                feature.replaceAll(RegExp(r'<[^>]*>'), '').replaceAll('&nbsp;', ' ').replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&#39;', "'"),
                                 style: GoogleFonts.inter(
                                   fontSize: 14.sp,
                                   color: const Color(0xff1f2937),
