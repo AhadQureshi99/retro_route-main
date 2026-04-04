@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "710019525635",
+    "project_id": "retro-route-co",
+    "storage_bucket": "retro-route-co.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:710019525635:android:3a50d5233bd754c0e3f236",
+        "android_client_info": {
+          "package_name": "com.retro.route.co"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAftQU8Bw1tRmnQOxRxlDP4Kld6Z0WkY4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
