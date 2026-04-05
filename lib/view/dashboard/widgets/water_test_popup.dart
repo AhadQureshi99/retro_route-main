@@ -850,6 +850,7 @@ class _MilkRunDialogState extends ConsumerState<_MilkRunDialog> {
                               onTap: () {
                                 setState(() {
                                   _selectedDate = _firstDate;
+                                  _showSchedule = false;
                                 });
                               },
                               child: Text(
@@ -962,7 +963,7 @@ class _MilkRunDialogState extends ConsumerState<_MilkRunDialog> {
                   ? date.toDateString() == _selectedDate!.toDateString()
                   : isNext;
               return GestureDetector(
-                onTap: () => setState(() => _selectedDate = date),
+                onTap: () => setState(() { _selectedDate = date; _showSchedule = false; }),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
                   decoration: BoxDecoration(

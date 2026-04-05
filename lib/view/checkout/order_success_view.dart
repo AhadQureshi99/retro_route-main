@@ -17,6 +17,8 @@ class OrderSuccessScreen extends ConsumerStatefulWidget {
   final String? deliveryZone;
   final String? deliveryAddress;
   final double? total;
+  final String? customerName;
+  final String? customerPhone;
 
   const OrderSuccessScreen({
     super.key,
@@ -26,6 +28,8 @@ class OrderSuccessScreen extends ConsumerStatefulWidget {
     this.deliveryZone,
     this.deliveryAddress,
     this.total,
+    this.customerName,
+    this.customerPhone,
   });
 
   /// Returns the human-readable order number, never the raw MongoDB ObjectId.
@@ -104,7 +108,7 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
 
             Center(
               child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 32.h),
+              padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 32.h, bottom: 100.h),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -264,6 +268,70 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
                                       color: Colors.black,
                                     ),
                                   ],
+                                ),
+                              ],
+                            ),
+                          ],
+                          // ── Customer Name ──
+                          if (widget.customerName != null &&
+                              widget.customerName!.trim().isNotEmpty) ...[
+                            verticalSpacer(height: 10),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.person_outline,
+                                    color: Colors.black, size: 18.sp),
+                                horizontalSpacer(width: 8.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      customText(
+                                        text: "Customer Name",
+                                        fontSize: 16,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      customText(
+                                        text: widget.customerName!.trim(),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          // ── Customer Phone ──
+                          if (widget.customerPhone != null &&
+                              widget.customerPhone!.trim().isNotEmpty) ...[
+                            verticalSpacer(height: 10),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.phone_outlined,
+                                    color: Colors.black, size: 18.sp),
+                                horizontalSpacer(width: 8.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      customText(
+                                        text: "Phone Number",
+                                        fontSize: 16,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      customText(
+                                        text: widget.customerPhone!.trim(),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

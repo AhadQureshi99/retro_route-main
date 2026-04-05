@@ -42,7 +42,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
 
     _controller.forward();
 
-    Timer(const Duration(milliseconds: 3000), _decideNavigation);
+    _initSplash();
+  }
+
+  Future<void> _initSplash() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool hasRegistered = prefs.getBool('has_registered') ?? false;
+
+    if (!hasRegistered) {
+      // First time user — skip splash animation, go straight to onboarding/register
+      _decideNavigation();
+    } else {
+      // Returning user — show 3s splash animation
+      Timer(const Duration(milliseconds: 3000), _decideNavigation);
+    }
   }
 
   Future<void> _decideNavigation() async {

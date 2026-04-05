@@ -31,9 +31,15 @@ class SelectedAddressNotifier extends StateNotifier<Address?> {
       }
 
       // If selected address was deleted, fall back to first valid address.
-      final stillExists = addresses.any((a) => a.safeId == state!.safeId);
-      if (!stillExists) {
-        state = next.addresses.first;
+      // If it still exists, refresh with the latest copy (handles edits).
+      final freshCopy = addresses.cast<Address?>().firstWhere(
+        (a) => a!.safeId == state!.safeId,
+        orElse: () => null,
+      );
+      if (freshCopy == null) {
+        state = addresses.first;
+      } else {
+        state = freshCopy;
       }
     });
   }

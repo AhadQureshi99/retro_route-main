@@ -308,26 +308,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           },
                         ),
 
-                             verticalSpacer(height: 16),
-
-                            // Continue as Guest Button
-                            customButton(
-                              context: context,
-                              text: "Continue as Guest",
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              fontColor: AppColors.btnColor ?? Colors.deepPurple,
-                              bgColor: Colors.transparent,
-                              borderColor: AppColors.btnColor ?? Colors.deepPurple,
-                              borderRadius: 16,
-                              height: 56,
-                              width: double.infinity,
-                              isCircular: false,
-                              onPressed: () {
-                                goRouter.go(AppRoutes.host);
-                              },
-                            ),
-
                         verticalSpacer(height: 24),
 
                         Row(

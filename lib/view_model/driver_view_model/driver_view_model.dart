@@ -173,7 +173,7 @@ class DriverDeliveriesNotifier extends Notifier<DriverDeliveriesState> {
     }
   }
 
-  /// Fetch active deliveries (Pending + OnMyWay)
+  /// Fetch active deliveries (Pending + OnMyWay + water_tested)
   Future<void> fetchActiveDeliveries(String token) async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -192,9 +192,16 @@ class DriverDeliveriesNotifier extends Notifier<DriverDeliveriesState> {
         status: 'On My Way',
       );
 
+      // Fetch water_tested deliveries (awaiting customer crate approval)
+      final waterTestedResponse = await repo.fetchMyDeliveries(
+        token: token,
+        status: 'water_tested',
+      );
+
       final List<DriverDelivery> allActive = [
         ...(pendingResponse.data ?? <DriverDelivery>[]),
         ...(onMyWayResponse.data ?? <DriverDelivery>[]),
+        ...(waterTestedResponse.data ?? <DriverDelivery>[]),
       ];
 
       state = state.copyWith(
@@ -430,6 +437,7 @@ class DriverDeliveriesNotifier extends Notifier<DriverDeliveriesState> {
     required String token,
     required EodReport report,
     File? odometerImage,
+    File? sodOdometerImage,
   }) async {
     try {
       final repo = ref.read(driverRepoProvider);
@@ -437,6 +445,7 @@ class DriverDeliveriesNotifier extends Notifier<DriverDeliveriesState> {
         token: token,
         report: report,
         odometerImage: odometerImage,
+        sodOdometerImage: sodOdometerImage,
       );
       return true;
     } catch (e) {

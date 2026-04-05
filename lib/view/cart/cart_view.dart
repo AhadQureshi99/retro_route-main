@@ -293,7 +293,7 @@ class CartScreen extends ConsumerWidget {
                           if (!AuthHelper.requireLogin(
                             context: context,
                             ref: ref,
-                            message: 'Please sign up to proceed to checkout.',
+                            message: 'Please signup or signin to proceed to checkout.',
                           )) {
                             return;
                           }

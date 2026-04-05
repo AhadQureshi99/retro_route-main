@@ -60,6 +60,7 @@ class User {
   final String id;
   final String name;
   final String email;
+  final String phone;
   final String avatar;
   final bool verifyEmail;
   final DateTime? lastLoginDate;
@@ -82,6 +83,7 @@ class User {
     required this.id,
     required this.name,
     required this.email,
+    required this.phone,
     required this.avatar,
     required this.verifyEmail,
     this.lastLoginDate,
@@ -106,6 +108,7 @@ class User {
       id: json['_id'] as String? ?? '',
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
       avatar: json['avatar'] as String? ?? '',
       verifyEmail: json['verifyEmail'] as bool? ?? false,
       lastLoginDate: json['lastLoginDate'] != null
@@ -137,6 +140,7 @@ class User {
       '_id': id,
       'name': name,
       'email': email,
+      'phone': phone,
       'role': role,
       '__v': version,
     };

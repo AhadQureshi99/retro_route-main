@@ -14,6 +14,7 @@ import 'package:retro_route/view/address/add_address_view.dart';
 import 'package:retro_route/view_model/address_view_model/address_view_model.dart';
 import 'package:retro_route/view_model/address_view_model/selected_delivery_address_view_model.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
+import 'package:retro_route/view_model/selected_delivery_date_provider.dart';
 
 class AddressesScreen extends ConsumerStatefulWidget {
   const AddressesScreen({super.key});
@@ -23,6 +24,9 @@ class AddressesScreen extends ConsumerStatefulWidget {
 }
 
 class _AddressesScreenState extends ConsumerState<AddressesScreen> {
+  /// Per-address custom delivery dates loaded from SharedPreferences.
+  final Map<String, DateTime> _addressDates = {};
+
   @override
   void initState() {
     super.initState();
@@ -33,6 +37,20 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           ref.read(addressProvider.notifier).fetchAddresses(user!.token);
         });
+      } else {
+        _loadAllAddressDates(address.addresses);
+      }
+    }
+  }
+
+  /// Load persisted delivery dates for all addresses.
+  Future<void> _loadAllAddressDates(List<dynamic> addresses) async {
+    for (final addr in addresses) {
+      final id = addr.safeId as String;
+      if (id.isEmpty) continue;
+      final date = await loadAddressDeliveryDate(id);
+      if (date != null && mounted) {
+        setState(() => _addressDates[id] = date);
       }
     }
   }
@@ -42,6 +60,14 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
     final state = ref.watch(addressProvider);
     final token = ref.watch(authNotifierProvider).value?.data?.token;
     final selectedAddress = ref.watch(selectedDeliveryAddressProvider);
+
+    // Reload per-address dates when addresses change
+    ref.listen(addressProvider, (prev, next) {
+      if (next.addresses.isNotEmpty &&
+          (prev == null || prev.addresses.length != next.addresses.length)) {
+        _loadAllAddressDates(next.addresses);
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.bgColor,
@@ -59,30 +85,6 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
           ),
         ),
         centerTitle: false,
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 16.w),
-            child: TextButton.icon(
-              onPressed: () => _pushAddAddress(context),
-              icon: Icon(Icons.add, size: 18.sp, color: AppColors.btnColor),
-              label: Text(
-                "Add Address",
-                style: GoogleFonts.inter(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.btnColor,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: () => _refreshAddresses(token),
@@ -119,12 +121,12 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
                                   final isSelected =
                                       selectedAddress?.safeId == addr.safeId;
                                   final zone = detectZoneByCity(addr.safeCity);
-                                  final nextDate = zone != null
+                                  final autoDate = zone != null
                                       ? getNextDeliveryDateFromDays(zone.deliveryDays)
                                       : null;
-                                  final secondDate = nextDate != null
-                                      ? nextDate.add(const Duration(days: 7))
-                                      : null;
+                                  // Use per-address custom date if saved, otherwise auto-compute
+                                  final customDate = _addressDates[addr.safeId];
+                                  final nextDate = customDate ?? autoDate;
 
                                   return Padding(
                                     padding: EdgeInsets.only(bottom: 12.h),
@@ -133,18 +135,38 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
                                       isSelected: isSelected,
                                       zone: zone,
                                       nextDate: nextDate,
-                                      secondDate: secondDate,
-                                      onTap: () => ref
-                                          .read(selectedDeliveryAddressProvider
-                                              .notifier)
-                                          .selectAddress(addr),
-                                      onEdit: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => AddAddressScreen(
-                                              addressToEdit: addr),
-                                        ),
-                                      ),
+                                      onTap: () {
+                                        final previousId = ref.read(selectedDeliveryAddressProvider)?.safeId;
+                                        ref
+                                            .read(selectedDeliveryAddressProvider
+                                                .notifier)
+                                            .selectAddress(addr);
+                                        // Only reset delivery date when switching to a DIFFERENT address
+                                        if (previousId != addr.safeId) {
+                                          // Use per-address saved date, or auto-compute
+                                          final savedDate = _addressDates[addr.safeId];
+                                          final newZone = detectZoneByCity(addr.safeCity);
+                                          final date = savedDate ??
+                                              (newZone != null ? getNextDeliveryDateFromDays(newZone.deliveryDays) : null);
+                                          ref.read(selectedDeliveryDateProvider.notifier).state = date;
+                                          if (date != null) saveSelectedDeliveryDate(date);
+                                        }
+                                      },
+                                      onEdit: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => AddAddressScreen(
+                                                addressToEdit: addr),
+                                          ),
+                                        ).then((_) async {
+                                          // Refresh addresses and reload per-address dates
+                                          if (token != null && token.isNotEmpty) {
+                                            await ref.read(addressProvider.notifier).fetchAddresses(token);
+                                          }
+                                          _loadAllAddressDates(ref.read(addressProvider).addresses);
+                                        });
+                                      },
                                       onDelete: () async {
                                         final ok = await _showDeleteConfirmation(
                                             context);
@@ -181,27 +203,55 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
                 16.w,
                 12.h + MediaQuery.of(context).padding.bottom,
               ),
-              child: customButton(
-                context: context,
-                text: selectedAddress == null
-                    ? "Select an Address"
-                    : "Confirm & Use This Address",
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                fontColor: Colors.white,
-                bgColor: selectedAddress == null
-                    ? Colors.grey[400]!
-                    : AppColors.btnColor,
-                borderRadius: 14.r,
-                height: 54,
-                width: double.infinity,
-                onPressed: selectedAddress == null
-                    ? null
-                    : () => Navigator.pop(context),
-                borderColor: selectedAddress == null
-                    ? Colors.grey[400]!
-                    : AppColors.btnColor,
-                isCircular: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _pushAddAddress(context),
+                      icon: Icon(Icons.add, size: 18.sp, color: AppColors.btnColor),
+                      label: Text(
+                        "Add Address or Date",
+                        style: GoogleFonts.inter(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.btnColor,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.btnColor, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+                  customButton(
+                    context: context,
+                    text: selectedAddress == null
+                        ? "Select an Address"
+                        : "Confirm Address & Date",
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontColor: Colors.white,
+                    bgColor: selectedAddress == null
+                        ? Colors.grey[400]!
+                        : AppColors.btnColor,
+                    borderRadius: 14.r,
+                    height: 54,
+                    width: double.infinity,
+                    onPressed: selectedAddress == null
+                        ? null
+                        : () => Navigator.pop(context),
+                    borderColor: selectedAddress == null
+                        ? Colors.grey[400]!
+                        : AppColors.btnColor,
+                    isCircular: false,
+                  ),
+                ],
               ),
             )
           : null,
@@ -209,10 +259,15 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
   }
 
   void _pushAddAddress(BuildContext context) {
+    final token = ref.read(authNotifierProvider).value?.data?.token;
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AddAddressScreen()),
-    ).then((_) {
+    ).then((_) async {
+      // Refresh addresses to pick up new address and reload per-address dates
+      if (token != null && token.isNotEmpty) {
+        await ref.read(addressProvider.notifier).fetchAddresses(token);
+      }
       final addresses = ref.read(addressProvider).addresses;
       if (addresses.isNotEmpty) {
         final current = ref.read(selectedDeliveryAddressProvider);
@@ -222,6 +277,7 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
               .read(selectedDeliveryAddressProvider.notifier)
               .selectAddress(addresses.first);
         }
+        _loadAllAddressDates(addresses);
       }
     });
   }
@@ -302,6 +358,9 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
   Future<void> _refreshAddresses(String? token) async {
     if (token == null || token.isEmpty) return;
     await ref.read(addressProvider.notifier).fetchAddresses(token);
+    // Reload per-address dates
+    final addresses = ref.read(addressProvider).addresses;
+    _loadAllAddressDates(addresses);
     if (mounted) CustomToast.success(msg: "Addresses refreshed");
   }
 
@@ -343,7 +402,6 @@ class _AddressCard extends StatelessWidget {
   final bool isSelected;
   final DeliveryZone? zone;
   final DateTime? nextDate;
-  final DateTime? secondDate;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -353,7 +411,6 @@ class _AddressCard extends StatelessWidget {
     required this.isSelected,
     required this.zone,
     required this.nextDate,
-    required this.secondDate,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -530,14 +587,6 @@ class _AddressCard extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-          ],
-          if (secondDate != null) ...[
-            SizedBox(height: 2.h),
-            Text(
-              'Next: ${formatDeliveryDate(secondDate!)}',
-              style: GoogleFonts.inter(
-                  fontSize: 14.sp, color: Colors.grey.shade900),
             ),
           ],
         ],

@@ -12,6 +12,7 @@ import 'package:retro_route/view/splash/q_onboarding_view4.dart';
 import 'package:retro_route/view_model/bottom_nav_view_model.dart';
 import 'package:retro_route/view_model/cart_view_model/cart_view_model.dart';
 import 'package:retro_route/config/delivery_zones.dart';
+import 'package:retro_route/view_model/selected_delivery_date_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,11 +63,14 @@ class _OnboardingState extends ConsumerState<QuestionOnboardingScreenOne> {
     if (savedCity.isEmpty) return;
     final zone = detectZoneByCity(savedCity);
     if (zone != null && mounted) {
+      // Use the date the user picked from the schedule grid (if any),
+      // otherwise fall back to the next computed delivery date.
+      final pickedDate = ref.read(selectedDeliveryDateProvider);
       setState(() {
         _routeInfo = {
           'zone': zone,
           'address': savedAddress.isNotEmpty ? savedAddress : savedCity,
-          'nextDate': getNextDeliveryDateFromDays(zone.deliveryDays),
+          'nextDate': pickedDate ?? getNextDeliveryDateFromDays(zone.deliveryDays),
         };
       });
     }

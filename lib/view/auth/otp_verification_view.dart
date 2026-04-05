@@ -10,6 +10,7 @@ import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
 import 'package:retro_route/utils/app_toast.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final otpLoadingProvider = StateProvider<bool>((ref) => false);
 
@@ -97,6 +98,10 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
 
       if (!mounted) return;
       CustomToast.success(msg: 'OTP Verified!');
+
+      // Mark as registered so splash shows on future app opens
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_registered', true);
 
       // Auto-login after successful verification (same as web)
       if (widget.password != null && widget.password!.isNotEmpty) {

@@ -76,6 +76,8 @@ class AuthNotifier extends AsyncNotifier<LoginResponse?> {
       log("Saving session for user: ${response.data?.user?.role ?? 'unknown'}");
       final jsonStr = jsonEncode(response.toJson());
       await prefs.setString(_prefKey, jsonStr);
+      // Mark as registered so splash animation shows on future opens
+      await prefs.setBool('has_registered', true);
       // Also save user profile for compatibility
       if (response.data?.user != null) {
         final userJson = jsonEncode(response.data!.user!.toJson());
@@ -124,6 +126,7 @@ class AuthNotifier extends AsyncNotifier<LoginResponse?> {
       id: oldUser.id,
       name: name,
       email: email,
+      phone: oldUser.phone,
       avatar: oldUser.avatar,
       verifyEmail: oldUser.verifyEmail,
       lastLoginDate: oldUser.lastLoginDate,

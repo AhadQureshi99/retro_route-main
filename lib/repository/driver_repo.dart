@@ -168,16 +168,27 @@ class DriverRepo {
     required String token,
     required EodReport report,
     File? odometerImage,
+    File? sodOdometerImage,
   }) async {
     try {
       log("Submitting EOD report: ${report.toJson()}");
+      final files = <File>[];
+      final fileFields = <String>[];
+      if (odometerImage != null) {
+        files.add(odometerImage);
+        fileFields.add('odometerImage');
+      }
+      if (sodOdometerImage != null) {
+        files.add(sodOdometerImage);
+        fileFields.add('sodOdometerImage');
+      }
       final response = await _apiServices.postApi(
         report.toJson(),
         AppUrls.submitEodReport,
         token,
-        isJson: odometerImage == null,
-        files: odometerImage != null ? [odometerImage] : null,
-        fileFields: odometerImage != null ? ['odometerImage'] : null,
+        isJson: files.isEmpty,
+        files: files.isNotEmpty ? files : null,
+        fileFields: fileFields.isNotEmpty ? fileFields : null,
       );
       log("Submit EOD report response: $response");
       return response as Map<String, dynamic>;

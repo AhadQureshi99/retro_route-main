@@ -91,6 +91,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
   bool _showDateOptions = false;
   double? _selectedLat;
   double? _selectedLon;
+  String? _validationError;
 
   @override
   void initState() {
@@ -145,6 +146,9 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
   }
 
   void _update(DeliverySafety Function(DeliverySafety) updater) {
+    if (_validationError != null) {
+      setState(() => _validationError = null);
+    }
     widget.onChange(updater(widget.data));
   }
 
@@ -307,42 +311,51 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
     widget.onChange(data);
 
     if (data.street.trim().isEmpty) {
+      setState(() => _validationError = 'address');
       _showSnack('Please enter your street address.');
       return false;
     }
     if (data.city.trim().isEmpty) {
+      setState(() => _validationError = 'address');
       _showSnack('Please enter your city.');
       return false;
     }
     if (data.postalCode.trim().isEmpty) {
+      setState(() => _validationError = 'address');
       _showSnack('Please enter your postal code.');
       return false;
     }
     if (data.dropOffSpot.trim().isEmpty) {
+      setState(() => _validationError = 'dropoff');
       _showSnack('Please select a drop-off spot.');
       return false;
     }
     if (data.backyardAccess.trim().isEmpty) {
+      setState(() => _validationError = 'backyard');
       _showSnack('Please choose backyard access preference.');
       return false;
     }
 
     if (data.backyardAccess == 'yes') {
       if (!data.backyardPermission) {
+        setState(() => _validationError = 'backyard');
         _showSnack('Please confirm backyard entry permission.');
         return false;
       }
       if (data.gateEntry.accessMethod.trim().isEmpty) {
+        setState(() => _validationError = 'gate');
         _showSnack('Please select how we get in.');
         return false;
       }
       if (data.gateEntry.gateLocation.trim().isEmpty) {
+        setState(() => _validationError = 'gate');
         _showSnack('Please select gate location.');
         return false;
       }
     }
 
     if (data.dogSafety.hasDogs && data.dogSafety.dogsContained.trim().isEmpty) {
+      setState(() => _validationError = 'dog');
       _showSnack('Please tell us if dogs will be contained during delivery.');
       return false;
     }
@@ -350,11 +363,13 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
     if (data.dogSafety.hasDogs &&
         data.dogSafety.dogsContained == 'yes' &&
         !data.dogSafety.petsSecuredConfirm) {
+      setState(() => _validationError = 'dog');
       _showSnack('Please confirm pets will be secured during the delivery window.');
       return false;
     }
 
     if (data.contactPreference.trim().isEmpty) {
+      setState(() => _validationError = 'contact');
       _showSnack('Please select your contact preference.');
       return false;
     }
@@ -439,6 +454,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
 
         // ── Address ──────────────────────────────────
         _card(
+          borderColor: _validationError == 'address' ? Colors.red : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -634,7 +650,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
         // ── Drop-off spot ────────────────────────────
         _card(
           bgColor: const Color(0xFFFFF7ED),
-          borderColor: const Color(0xFFFED7AA),
+          borderColor: _validationError == 'dropoff' ? Colors.red : const Color(0xFFFED7AA),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -672,6 +688,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
         // ── Backyard access ──────────────────────────
         _card(
           bgColor: Colors.grey.shade50,
+          borderColor: _validationError == 'backyard' ? Colors.red : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -782,7 +799,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
         // ── Dog safety ───────────────────────────────
         _card(
           bgColor: const Color(0xFFFFF7ED),
-          borderColor: const Color(0xFFFED7AA),
+          borderColor: _validationError == 'dog' ? Colors.red : const Color(0xFFFED7AA),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -968,7 +985,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
           SizedBox(height: 14.h),
           _card(
             bgColor: _primaryLight,
-            borderColor: _primaryBorder,
+            borderColor: _validationError == 'gate' ? Colors.red : _primaryBorder,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1062,6 +1079,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
 
         // ── Contact & proof ──────────────────────────
         _card(
+          borderColor: _validationError == 'contact' ? Colors.red : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

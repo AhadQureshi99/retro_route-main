@@ -20,6 +20,8 @@ import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_toast.dart';
 import 'package:retro_route/view_model/address_view_model/address_view_model.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
+import 'package:retro_route/view_model/selected_delivery_date_provider.dart';
+import 'package:retro_route/view_model/address_view_model/selected_delivery_address_view_model.dart';
 
 class AddAddressScreen extends ConsumerStatefulWidget {
   final Address? addressToEdit;
@@ -67,6 +69,11 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
   double? _currentLon;
   bool _fetchingLocation = false;
   Completer<void>? _locationCompleter;
+
+  // Delivery date picker (green zone card)
+  DateTime? _customDate;
+  bool _useCustomDate = false;
+  bool _showDatePicker = false;
 
   // Map picker
   bool _showMap = false;
@@ -909,6 +916,40 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
           );
 
     if (success && mounted) {
+      // Compute the delivery date (custom or auto)
+      final deliveryDate = _detectedZone != null
+          ? (_useCustomDate && _customDate != null
+              ? _customDate!
+              : getNextDeliveryDateFromDays(_detectedZone!.deliveryDays))
+          : null;
+
+      if (deliveryDate != null) {
+        // For existing address: save per-address date
+        if (widget.addressToEdit != null) {
+          final addrId = widget.addressToEdit!.safeId;
+          await saveAddressDeliveryDate(addrId, deliveryDate);
+          // Also update global provider if this is the selected delivery address
+          final selectedAddr = ref.read(selectedDeliveryAddressProvider);
+          if (selectedAddr?.safeId == addrId) {
+            ref.read(selectedDeliveryDateProvider.notifier).state = deliveryDate;
+            saveSelectedDeliveryDate(deliveryDate);
+          }
+        } else {
+          // For new address: save per-address date after addresses are re-fetched
+          // The global provider is set so checkout picks it up for the newest address
+          ref.read(selectedDeliveryDateProvider.notifier).state = deliveryDate;
+          saveSelectedDeliveryDate(deliveryDate);
+          // Save per-address date for the newly created address (last in list after re-fetch)
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final addresses = ref.read(addressProvider).addresses;
+            if (addresses.isNotEmpty) {
+              final newAddr = addresses.last;
+              saveAddressDeliveryDate(newAddr.safeId, deliveryDate);
+            }
+          });
+        }
+      }
+
       CustomToast.success(
         msg: widget.addressToEdit == null
             ? "Address added successfully"
@@ -1588,10 +1629,12 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                       v!.trim().isEmpty ? "Country is required" : null,
                   width: 1.sw,
                 ),
-                verticalSpacer(height: 32.h),
+                verticalSpacer(height: 20.h),
 
-              
-                // verticalSpacer(height: 12.h),
+                // ── Green Delivery Zone Card ─────────────────────────
+                if (_detectedZone != null) _buildDeliveryZoneCard(),
+
+                verticalSpacer(height: 24.h),
 
                 // Submit button
                 customButton(
@@ -1766,6 +1809,283 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── Date helpers ────────────────────────────────────────────────────────
+  List<DateTime> _getAvailableDates(DeliveryZone zone) {
+    const dayNames = [
+      'Sunday', 'Monday', 'Tuesday', 'Wednesday',
+      'Thursday', 'Friday', 'Saturday',
+    ];
+    final targetDays = zone.deliveryDays
+        .map((d) => dayNames.indexOf(d))
+        .where((i) => i >= 0)
+        .toList();
+    final dates = <DateTime>[];
+    var check = DateTime.now().add(const Duration(days: 1));
+    while (dates.length < 4) {
+      final currentDay = check.weekday % 7;
+      if (targetDays.contains(currentDay)) dates.add(check);
+      check = check.add(const Duration(days: 1));
+    }
+    return dates;
+  }
+
+  String _fmtDateFull(DateTime d) {
+    const m = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    const wd = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return '${wd[d.weekday - 1]}, ${m[d.month - 1]} ${d.day}';
+  }
+
+  // ── Green Delivery Zone Card ──────────────────────────────────────────
+  Widget _buildDeliveryZoneCard() {
+    final zone = _detectedZone!;
+    final deliveryDate = _useCustomDate && _customDate != null
+        ? _customDate!
+        : getNextDeliveryDateFromDays(zone.deliveryDays);
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.primary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0284c7).withOpacity(0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(14.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Heading
+          Row(
+            children: [
+              Icon(Icons.local_shipping_rounded,
+                  size: 18.sp, color: Colors.white),
+              SizedBox(width: 6.w),
+              Expanded(
+                child: Text(
+                  'Your milk run : Every ${zone.deliveryDaysLabel}',
+                  style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+
+          // ── Zone + address frosted panel
+          Container(
+            padding: EdgeInsets.all(10.w),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Zone ${zone.id}',
+                    style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white)),
+                if (_addressCtrl.text.trim().isNotEmpty ||
+                    _cityCtrl.text.trim().isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(top: 2.h),
+                    child: Row(children: [
+                      Icon(Icons.location_on_outlined,
+                          size: 13.sp, color: Colors.white70),
+                      SizedBox(width: 4.w),
+                      Expanded(
+                        child: Text(
+                          [
+                            _addressCtrl.text.trim(),
+                            _cityCtrl.text.trim(),
+                            _pinCodeCtrl.text.trim()
+                          ].where((s) => s.isNotEmpty).join(', '),
+                          style: GoogleFonts.inter(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white70),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                  ),
+                SizedBox(height: 4.h),
+                Row(children: [
+                  Icon(Icons.calendar_today_rounded,
+                      size: 12, color: Colors.amber.shade200),
+                  SizedBox(width: 4.w),
+                  Expanded(
+                    child: Text(
+                      'Next Delivery: ${_fmtDateFull(deliveryDate)}',
+                      style: GoogleFonts.inter(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.amber.shade200),
+                    ),
+                  ),
+                ]),
+              ],
+            ),
+          ),
+          SizedBox(height: 8.h),
+
+          // ── Date picker frosted panel
+          Container(
+            padding: EdgeInsets.all(10.w),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Choose a different date?',
+                              style: GoogleFonts.inter(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white)),
+                          if (_useCustomDate && _customDate != null)
+                            Text('Selected: ${_fmtDateFull(_customDate!)}',
+                                style: GoogleFonts.inter(
+                                    fontSize: 14.sp,
+                                    color: const Color(0xFFfde68a))),
+                        ]),
+                    GestureDetector(
+                      onTap: () =>
+                          setState(() => _showDatePicker = !_showDatePicker),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 10.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        child: Row(children: [
+                          Icon(Icons.calendar_month_rounded,
+                              size: 16.sp, color: Colors.white),
+                          SizedBox(width: 4.w),
+                          Text(_showDatePicker ? 'Close' : 'Pick Date',
+                              style: GoogleFonts.inter(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
+                        ]),
+                      ),
+                    ),
+                  ],
+                ),
+                // Date grid
+                if (_showDatePicker) ...[
+                  SizedBox(height: 10.h),
+                  Container(
+                    padding: EdgeInsets.all(10.w),
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8.r)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Select your preferred delivery date:',
+                            style: GoogleFonts.inter(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade800)),
+                        SizedBox(height: 8.h),
+                        LayoutBuilder(builder: (context, constraints) {
+                          final itemWidth = (constraints.maxWidth - 6.w) / 2;
+                          return Wrap(
+                            spacing: 6.w,
+                            runSpacing: 6.h,
+                            children:
+                                _getAvailableDates(zone).map((date) {
+                              final isSelected = _customDate != null &&
+                                  _customDate!.year == date.year &&
+                                  _customDate!.month == date.month &&
+                                  _customDate!.day == date.day;
+                              return SizedBox(
+                                width: itemWidth,
+                                child: GestureDetector(
+                                  onTap: () => setState(() {
+                                    _customDate = date;
+                                    _useCustomDate = true;
+                                    _showDatePicker = false;
+                                  }),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 12.w, vertical: 8.h),
+                                    decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppColors.primary
+                                            : Colors.grey.shade100,
+                                        borderRadius:
+                                            BorderRadius.circular(8.r)),
+                                    child: Text(_fmtDateFull(date),
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.inter(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: isSelected
+                                                ? Colors.white
+                                                : Colors.grey.shade700)),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
+                // Proceed with earliest
+                if (_useCustomDate && _customDate != null) ...[
+                  SizedBox(height: 6.h),
+                  GestureDetector(
+                    onTap: () => setState(
+                        () { _customDate = null; _useCustomDate = false; }),
+                    child: Text('Proceed with earliest date',
+                        style: GoogleFonts.inter(
+                            fontSize: 14.sp,
+                            color: const Color(0xFFfde68a),
+                            decorationColor: const Color(0xFFfde68a),
+                            decoration: TextDecoration.underline)),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          SizedBox(height: 10.h),
+          Text(
+              'Free backyard delivery · Water testing available on request.',
+              style: GoogleFonts.inter(
+                  fontSize: 14.sp, color: Colors.amber.shade200)),
+        ],
       ),
     );
   }

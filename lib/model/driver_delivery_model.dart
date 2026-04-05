@@ -180,7 +180,7 @@ class DriverDelivery {
   double get safeTotal => (total ?? 0).toDouble();
   String get formattedTotal => '\$${safeTotal.toStringAsFixed(2)}';
   String? get crateStatus => pendingCrate?['status'] as String?;
-  bool get crateApproved => crateStatus == 'approved' || crateStatus == 'paid' || crateStatus == 'delivered';
+  bool get crateApproved => crateStatus == 'paid' || crateStatus == 'delivered';
   bool get cratePending => crateStatus == 'pending_approval';
 }
 

@@ -85,7 +85,7 @@ class AuthHelper {
           ],
         ),
         content: Text(
-          message ?? 'Please sign up to access this feature.',
+          message ?? 'Please signup or signin to proceed to checkout.',
           style: TextStyle(
             fontSize: 15,
             color: AppColors.primary,
@@ -117,7 +117,7 @@ class AuthHelper {
               ),
             ),
             child: const Text(
-              'Sign Up',
+              'Proceed',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),

@@ -29,19 +29,24 @@ class _DriverEodScreenState extends ConsumerState<DriverEodScreen> {
   bool _submitting = false;
   double _sodReading = 0;
   File? _eodOdometerImage;
+  File? _sodOdometerImage;
 
   @override
   void initState() {
     super.initState();
-    _loadSodReading();
+    _loadSodData();
   }
 
-  Future<void> _loadSodReading() async {
+  Future<void> _loadSodData() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().substring(0, 10);
     final sodDate = prefs.getString('sod_date') ?? '';
     if (sodDate == today) {
       _sodReading = prefs.getDouble('sod_reading') ?? 0;
+      final sodImagePath = prefs.getString('sod_image');
+      if (sodImagePath != null && File(sodImagePath).existsSync()) {
+        _sodOdometerImage = File(sodImagePath);
+      }
     }
     if (mounted) setState(() {});
   }
@@ -121,6 +126,7 @@ class _DriverEodScreenState extends ConsumerState<DriverEodScreen> {
           token: token,
           report: report,
           odometerImage: _eodOdometerImage,
+          sodOdometerImage: _sodOdometerImage,
         );
 
     setState(() {
@@ -133,6 +139,7 @@ class _DriverEodScreenState extends ConsumerState<DriverEodScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('sod_date');
       await prefs.remove('sod_reading');
+      await prefs.remove('sod_image');
 
       // Brief delay so driver sees the success message
       await Future.delayed(const Duration(seconds: 2));

@@ -127,19 +127,23 @@ class NotificationServices {
   void _handleNotificationNavigation(Map<String, dynamic> data) {
     final screen = data['screen'] as String?;
     final orderId = data['orderId'] as String?;
-    if (screen == null || orderId == null) return;
 
     final ctx = rootNavigatorKey.currentContext;
     if (ctx == null) return;
 
-    switch (screen) {
-      case 'CrateApproval':
-        GoRouter.of(ctx).push('${AppRoutes.crateApproval}?orderId=$orderId');
-        break;
-      case 'PoolReport':
-        GoRouter.of(ctx).push('${AppRoutes.poolReport}?orderId=$orderId');
-        break;
+    if (screen != null && orderId != null) {
+      switch (screen) {
+        case 'CrateApproval':
+          GoRouter.of(ctx).push('${AppRoutes.crateApproval}?orderId=$orderId');
+          return;
+        case 'PoolReport':
+          GoRouter.of(ctx).push('${AppRoutes.poolReport}?orderId=$orderId');
+          return;
+      }
     }
+
+    // Default: open notifications page for any notification tap
+    GoRouter.of(ctx).go(AppRoutes.notifications);
   }
 
   /// Get token and save via API

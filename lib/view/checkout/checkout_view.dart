@@ -23,6 +23,7 @@ import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/view_model/cart_view_model/cart_view_model.dart';
 import 'package:retro_route/config/delivery_zones.dart';
 import 'package:retro_route/view_model/selected_delivery_date_provider.dart';
+import 'package:intl/intl.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -82,7 +83,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         _outOfZoneDay = null;
         // Use user-selected date from milk run if available, otherwise auto-compute
         final userPickedDate = ref.read(selectedDeliveryDateProvider);
-        _selectedDeliveryDate = userPickedDate ?? getNextDeliveryDateFromDays(zone.deliveryDays);
+        if (userPickedDate != null) {
+          _selectedDeliveryDate = userPickedDate;
+        } else {
+          // Set auto-computed as default first
+          _selectedDeliveryDate = getNextDeliveryDateFromDays(zone.deliveryDays);
+          // Then try loading per-address persisted date
+          final addrId = address.safeId as String? ?? '';
+          if (addrId.isNotEmpty) {
+            loadAddressDeliveryDate(addrId).then((persistedDate) {
+              if (persistedDate != null && mounted) {
+                setState(() => _selectedDeliveryDate = persistedDate);
+                ref.read(selectedDeliveryDateProvider.notifier).state = persistedDate;
+              }
+            });
+          }
+        }
       }
     });
   }
@@ -91,6 +107,94 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   double _computeShipping(double subtotal) {
     if (_isOutOfZone) return _outOfZoneFee;
     return 0.0;
+  }
+
+  List<DateTime> _getScheduleDates() {
+    if (_detectedZone == null) return [];
+    const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    final targetDays = _detectedZone!.deliveryDays.map((d) => days.indexOf(d.toLowerCase())).where((i) => i >= 0).toList();
+    if (targetDays.isEmpty) return [];
+    final dates = <DateTime>[];
+    var check = DateTime.now().add(const Duration(days: 1));
+    while (dates.length < 8) {
+      final currentDay = check.weekday % 7;
+      if (targetDays.contains(currentDay)) dates.add(check);
+      check = check.add(const Duration(days: 1));
+    }
+    return dates;
+  }
+
+  void _showChangeDateSheet() {
+    final dates = _getScheduleDates();
+    if (dates.isEmpty) return;
+    final fmt = DateFormat('EEE, MMM d');
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Choose Delivery Date',
+                  style: GoogleFonts.inter(fontSize: 16.sp, fontWeight: FontWeight.w700)),
+              SizedBox(height: 14.h),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 8.h,
+                  crossAxisSpacing: 8.w,
+                  childAspectRatio: 3.2,
+                ),
+                itemCount: dates.length,
+                itemBuilder: (_, idx) {
+                  final date = dates[idx];
+                  final current = _selectedDeliveryDate ?? getNextDeliveryDateFromDays(_detectedZone!.deliveryDays);
+                  final isSelected = date.year == current.year && date.month == current.month && date.day == current.day;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedDeliveryDate = date);
+                      ref.read(selectedDeliveryDateProvider.notifier).state = date;
+                      saveSelectedDeliveryDate(date);
+                      // Also save per-address
+                      final selAddr = ref.read(selectedDeliveryAddressProvider);
+                      final addrId = selAddr?.safeId ?? '';
+                      if (addrId.isNotEmpty) saveAddressDeliveryDate(addrId, date);
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFFFFF9EF) : Colors.white,
+                        borderRadius: BorderRadius.circular(10.r),
+                        border: Border.all(
+                          color: isSelected ? AppColors.btnColor : Colors.grey.shade300,
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Text(
+                        fmt.format(date),
+                        style: GoogleFonts.inter(
+                          fontSize: 14.sp,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected ? AppColors.btnColor : Colors.grey.shade800,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: 12.h),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -119,6 +223,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         _detectZoneFromAddress(selectedAddress);
       }
     });
+
+    // Sync delivery date when user picks one on the Change Delivery Date page
+    final pickedDate = ref.watch(selectedDeliveryDateProvider);
+    if (pickedDate != null && pickedDate != _selectedDeliveryDate) {
+      _selectedDeliveryDate = pickedDate;
+    }
 
     final subtotal = cart.subtotal;
     final hasOtherProducts = cart.items.any((item) => item.product.isService != true);
@@ -155,11 +265,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             children: [
               verticalSpacer(height: 16),
 
-              // ── 1. Delivery Address Card ─────────────────────────────────
+              // ── 1. Delivery Address & Zone (merged) ────────────────────────
               _buildSectionTitle("Delivery Address"),
               verticalSpacer(height: 12),
               Container(
-                padding: EdgeInsets.only(left:  20.w,right: 20.w,top: 20.w),
+                padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 20.w),
                 decoration: _cardDecoration(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,13 +290,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                       verticalSpacer(height: 6),
-                      if (selectedAddress.safeMobile.isNotEmpty)
-                        customText(
-                          text: "Phone: ${selectedAddress.safeMobile}",
+                      Builder(builder: (_) {
+                        final phone = selectedAddress.safeMobile.isNotEmpty
+                            ? selectedAddress.safeMobile
+                            : (ref.read(authNotifierProvider).value?.data?.user.phone ?? '');
+                        if (phone.isEmpty) return const SizedBox.shrink();
+                        return customText(
+                          text: "Phone: $phone",
                           fontSize: 14.sp,
                           color: Colors.grey[600]!,
                           fontWeight: FontWeight.w500,
-                        ),
+                        );
+                      }),
                     ] else
                       customText(
                         text: "No address selected",
@@ -195,22 +310,48 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         fontWeight: FontWeight.w500,
                       ),
 
+                    // ── Zone & delivery date info (inside same card) ────────
+                    if (_detectedZone != null && !_isOutOfZone) ...[
+                      verticalSpacer(height: 10),
+                      Divider(color: Colors.grey[300], height: 1),
+                      verticalSpacer(height: 10),
+                      customText(
+                        text: "Your Zone: Zone ${_detectedZone!.id}",
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      verticalSpacer(height: 4),
+                      customText(
+                        text: "Milk Run: Every ${_detectedZone!.deliveryDaysLabel}",
+                        fontSize: 14.sp,
+                        color: Colors.grey[700]!,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      verticalSpacer(height: 4),
+                      customText(
+                        text: "Your Delivery Date: ${formatDeliveryDate(_selectedDeliveryDate ?? getNextDeliveryDateFromDays(_detectedZone!.deliveryDays))}",
+                        fontSize: 14.sp,
+                        color: Colors.grey[600]!,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ],
+
                     verticalSpacer(height: 8),
 
+                    // Single button for both address & delivery date change
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
-                        onPressed: () {
-                          context.push(AppRoutes.myAddress);
-                        },
+                        onPressed: () => context.push(AppRoutes.myAddress),
                         icon: Icon(
                           Icons.edit_location_outlined,
                           size: 20.sp,
                           color: AppColors.primary,
                         ),
                         label: customText(
-                          text: "Change Address",
-                          fontSize: 15.sp,
+                          text: "Change Address & Delivery Date",
+                          fontSize: 14.sp,
                           color: AppColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
@@ -269,133 +410,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                 ),
 
-              verticalSpacer(height: 8),
-
-              // ── Out-of-Zone Delivery Option ──────────────────────────────
-              // Only show when the address is NOT inside any delivery zone
-              if (_detectedZone == null)
-                _buildOutOfZoneCard(),
-
-              verticalSpacer(height: 4),
-
-              // ── 3. Delivery Date & Notes ─────────────────────────────────
-            
-              // Auto-detected delivery date info
-              if (_detectedZone != null && !_isOutOfZone)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // _buildSectionTitle("Delivery Details"),
-                    // verticalSpacer(height: 8),
-                    Container(
-                      margin: EdgeInsets.only(bottom: 12.h),
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                      decoration: BoxDecoration(
-                        color: _detectedZone!.color.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                            color: _detectedZone!.color.withValues(alpha: 0.25)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header
-                          Row(
-                            children: [
-                              Icon(Icons.local_shipping_rounded,
-                                  color: _detectedZone!.color, size: 18.sp),
-                              horizontalSpacer(width: 8.w),
-                              customText(
-                                text: "Delivery Zone",
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[900]!,
-                              ),
-                            ],
-                          ),
-                          verticalSpacer(height: 10.h),
-                          // Zone
-                          customText(
-                            text:
-                                "Zone ${_detectedZone!.id}",
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: _detectedZone!.color,
-                          ),
-                          verticalSpacer(height: 6.h),
-                          // Delivery Day
-                          RichText(
-                            text: TextSpan(
-                              style: GoogleFonts.inter(
-                                fontSize: 14.sp,
-                                color: Colors.grey[900],
-                                height: 1.4,
-                              ),
-                              children: [
-                                const TextSpan(text: "Delivery Days: "),
-                                TextSpan(
-                                  text: _detectedZone!.deliveryDaysLabel,
-                                  style: GoogleFonts.inter(fontWeight: FontWeight.w600,fontSize: 14.sp),
-                                ),
-                              ],
-                            ),
-                          ),
-                          verticalSpacer(height: 4.h),
-                          // Delivery date
-                          customText(
-                            text:
-                                "Your Delivery Date: ${formatDeliveryDate(_selectedDeliveryDate ?? getNextDeliveryDateFromDays(_detectedZone!.deliveryDays))}",
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.grey[900]!,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-              if (_isOutOfZone && _outOfZoneDay != null)
-                Container(
-                  margin: EdgeInsets.only(bottom: 12.h),
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: Colors.amber.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today_rounded,
-                          color: Colors.amber.shade700, size: 22.sp),
-                      horizontalSpacer(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            customText(
-                              text:
-                                  "Out-of-Zone — Every $_outOfZoneDay",
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                            verticalSpacer(height: 2.h),
-                            customText(
-                              text: _outOfZoneDate != null
-                                  ? "Delivery date: ${formatDeliveryDate(_outOfZoneDate!)} — Fee: \$${_outOfZoneFee.toStringAsFixed(2)}"
-                                  : "Please select a delivery date — Fee: \$${_outOfZoneFee.toStringAsFixed(2)}",
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.amber.shade800,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               verticalSpacer(height: 6.h),
 
               // Delivery instructions
@@ -564,31 +578,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (_isOutOfZone || (_detectedZone == null && selectedAddress != null))
-              Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
-                child: Text(
-                  'Ordering is not available for out-of-zone addresses',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.red.shade700,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+
             customButton(
           context: context,
           text: _isProcessing ? "Processing..." : "Pay \$${total.toStringAsFixed(2)} CAD",
           fontSize: 18.sp,
           fontWeight: FontWeight.bold,
-          fontColor: (_isOutOfZone || _detectedZone == null) ? Colors.white.withOpacity(0.6) : Colors.white,
-          bgColor: (_isOutOfZone || _detectedZone == null) ? Colors.grey.shade400 : AppColors.btnColor,
+          fontColor: Colors.white,
+          bgColor: AppColors.btnColor,
           borderRadius: 20.r,
           height: 48,
           width: double.infinity,
           isLoading: _isProcessing,
-          onPressed: (_isOutOfZone || _detectedZone == null) ? null : () async {
+          onPressed: _isProcessing ? null : () async {
             if (selectedAddress == null) {
               CustomToast.info(msg: "Please select a delivery address");
               return;
@@ -703,6 +705,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ? selectedAddress.displayAddress
                     : selectedAddress.safeCity,
                 'total': total,
+                'customerName': selectedAddress.safeFullName,
+                'customerPhone': selectedAddress.safeMobile.isNotEmpty
+                    ? selectedAddress.safeMobile
+                    : (ref.read(authNotifierProvider).value?.data?.user.phone ?? ''),
               });
             } on StripeException catch (e) {
               String message = 'Payment failed';

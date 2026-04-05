@@ -13,6 +13,7 @@ import 'package:retro_route/view/auth/register_view.dart';
 import 'package:retro_route/view/auth/reset_password_view.dart';
 import 'package:retro_route/view/auth/setup/post_signup_setup_screen.dart';
 import 'package:retro_route/view/cart/cart_view.dart';
+import 'package:retro_route/view/checkout/change_delivery_date_view.dart';
 import 'package:retro_route/view/checkout/checkout_view.dart';
 import 'package:retro_route/view/checkout/order_success_view.dart';
 import 'package:retro_route/view/customer/crate_approval_screen.dart';
@@ -76,6 +77,7 @@ class AppRoutes {
   static const crateApproval = '/crate-approval';
   static const poolReport = '/pool-report';
   static const notifications = '/notifications';
+  static const changeDeliveryDate = '/change-delivery-date';
 }
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -185,6 +187,8 @@ final goRouter = GoRouter(
               deliveryZone: extra?['deliveryZone'] as String?,
               deliveryAddress: extra?['deliveryAddress'] as String?,
               total: extra?['total'] as double?,
+              customerName: extra?['customerName'] as String?,
+              customerPhone: extra?['customerPhone'] as String?,
             );
           },
         ),
@@ -226,6 +230,10 @@ final goRouter = GoRouter(
         GoRoute(
           path: AppRoutes.notifications,
           builder: (context, state) => const NotificationView(),
+        ),
+        GoRoute(
+          path: AppRoutes.changeDeliveryDate,
+          builder: (context, state) => const ChangeDeliveryDateScreen(),
         ),
 
       ],
