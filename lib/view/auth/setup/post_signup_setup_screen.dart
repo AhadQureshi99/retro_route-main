@@ -80,6 +80,8 @@ class _PostSignupSetupScreenState extends ConsumerState<PostSignupSetupScreen> {
       );
 
       if (success) {
+        // Refresh auth session so profile shows correct user data
+        await ref.read(authNotifierProvider.notifier).refreshSession();
         CustomToast.success(msg: "Setup complete! Welcome to RetroRoute 🎉");
         await _goHostWithLastSelectedTab();
       } else {

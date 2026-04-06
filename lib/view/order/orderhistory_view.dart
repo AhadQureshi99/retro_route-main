@@ -62,6 +62,8 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
         'Pending',
         'Processing',
         'Shipped',
+        'On My Way',
+        'water_tested',
       ].contains(order.deliveryStatus);
 
       return matchesSearch && (isActive ? isActiveOrder : !isActiveOrder);

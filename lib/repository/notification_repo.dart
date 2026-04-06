@@ -32,4 +32,14 @@ class NotificationRepo {
       rethrow;
     }
   }
+
+  Future<void> deleteNotification({required String notificationId, required String token}) async {
+    try {
+      final url = "${AppUrls.baseUrl}/api/v1/notification/$notificationId";
+      await _apiServices.deleteApi(url, token, null);
+    } catch (e, stack) {
+      log("deleteNotification failed", error: e, stackTrace: stack);
+      rethrow;
+    }
+  }
 }

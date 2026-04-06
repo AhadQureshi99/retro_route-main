@@ -22,6 +22,7 @@ import 'package:retro_route/view_model/category_view_model/selected_category_vie
 import 'package:retro_route/view_model/product_view_model/product_view_model.dart';
 import 'package:retro_route/view_model/slider_view_model/slider_view_model.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:retro_route/services/notification_service.dart';
 import 'package:retro_route/view/dashboard/widgets/water_test_popup.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/view_model/notification_view_model/notification_view_model.dart';
@@ -45,10 +46,8 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   OverlayEntry? _filterOverlay;
   final LayerLink _filterLayerLink = LayerLink();
 
-  // Guard flags – prevent dialog from re-showing on every rebuild
-  bool _sliderErrorDialogShown = false;
-  bool _categoriesErrorDialogShown = false;
-  bool _productsErrorDialogShown = false;
+  // Single guard flag – prevents stacking multiple no-internet dialogs
+  bool _noInternetDialogShown = false;
 
   @override
   void initState() {
@@ -73,6 +72,12 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   }
 
   Future<void> _tryShowWaterTestPopup() async {
+    // Don't show if the app was opened via a notification tap
+    if (NotificationServices.instance.openedFromNotification) {
+      NotificationServices.instance.openedFromNotification = false;
+      return;
+    }
+
     // Only show once per app session
     if (_milkRunPopupShownThisSession) return;
 
@@ -348,11 +353,11 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     final productsAsync = ref.watch(productsProvider(productCategoryId));
     final sliderAsync = ref.watch(sliderProvider);
 
-    // Reset flags when providers succeed so the dialog can show again
+    // Reset flag when ALL providers succeed so the dialog can show again
     // if a NEW error occurs later (e.g. user loses connection again)
-    if (sliderAsync.hasValue) _sliderErrorDialogShown = false;
-    if (categoriesAsync.hasValue) _categoriesErrorDialogShown = false;
-    if (productsAsync.hasValue) _productsErrorDialogShown = false;
+    if (sliderAsync.hasValue && categoriesAsync.hasValue && productsAsync.hasValue) {
+      _noInternetDialogShown = false;
+    }
 
     return Scaffold(
          backgroundColor: AppColors.bgColor,
@@ -743,14 +748,16 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                         },
                         loading: () => const ShimmerSliderBanner(),
                         error: (err, stack) {
-                          if (!_sliderErrorDialogShown) {
-                            _sliderErrorDialogShown = true;
+                          if (!_noInternetDialogShown) {
+                            _noInternetDialogShown = true;
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (mounted) {
                                 _showNoInternetDialog(
                                   onRetry: () {
-                                    _sliderErrorDialogShown = false;
+                                    _noInternetDialogShown = false;
                                     ref.invalidate(sliderProvider);
+                                    ref.invalidate(categoriesProvider);
+                                    ref.invalidate(productsProvider(selectedCategory?.id));
                                   },
                                 );
                               }
@@ -1002,14 +1009,16 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                           ),
                         ),
                         error: (err, stack) {
-                          if (!_categoriesErrorDialogShown) {
-                            _categoriesErrorDialogShown = true;
+                          if (!_noInternetDialogShown) {
+                            _noInternetDialogShown = true;
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (mounted) {
                                 _showNoInternetDialog(
                                   onRetry: () {
-                                    _categoriesErrorDialogShown = false;
+                                    _noInternetDialogShown = false;
+                                    ref.invalidate(sliderProvider);
                                     ref.invalidate(categoriesProvider);
+                                    ref.invalidate(productsProvider(selectedCategory?.id));
                                   },
                                 );
                               }
@@ -1055,15 +1064,14 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                   }
                                 },
                                 child: Container(
-                                  width: 110.w,
-                                  height: 85.w,
-                                  margin: EdgeInsets.only(right: 8.w),
+                                  width: 160.w,
+                                  margin: EdgeInsets.only(right: 10.w),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12.r),
                                     border: isSubSelected
                                         ? Border.all(
                                             color: AppColors.btnColor,
-                                            width: 2.5,
+                                            width: 3,
                                           )
                                         : Border.all(
                                             color: Colors.grey[300]!,
@@ -1071,23 +1079,27 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                           ),
                                   ),
                                   child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(isSubSelected ? 9.5.r : 11.r),
+                                    borderRadius: BorderRadius.circular(isSubSelected ? 9.r : 11.r),
                                     child: CachedNetworkImage(
                                       imageUrl: sub.safeImage,
                                       width: double.infinity,
-                                      height: double.infinity,
+                                      height: 110.h,
                                       fit: BoxFit.cover,
                                       placeholder: (ctx, url) =>
                                           Shimmer.fromColors(
                                         baseColor: Colors.grey[300]!,
                                         highlightColor: Colors.grey[100]!,
-                                        child: Container(color: Colors.white),
+                                        child: Container(
+                                          height: 110.h,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                       errorWidget: (ctx, url, err) =>
                                           Container(
+                                        height: 110.h,
                                         color: Colors.grey[200],
                                         child: Icon(Icons.category_rounded,
-                                            size: 20.sp,
+                                            size: 24.sp,
                                             color: Colors.grey[400]),
                                       ),
                                     ),
@@ -1232,15 +1244,16 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                               const ShimmerProductCard(),
                         ),
                         error: (err, stack) {
-                          if (!_productsErrorDialogShown) {
-                            _productsErrorDialogShown = true;
+                          if (!_noInternetDialogShown) {
+                            _noInternetDialogShown = true;
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (mounted) {
                                 _showNoInternetDialog(
                                   onRetry: () {
-                                    _productsErrorDialogShown = false;
-                                    ref.invalidate(
-                                        productsProvider(selectedCategory?.id));
+                                    _noInternetDialogShown = false;
+                                    ref.invalidate(sliderProvider);
+                                    ref.invalidate(categoriesProvider);
+                                    ref.invalidate(productsProvider(selectedCategory?.id));
                                   },
                                 );
                               }

@@ -37,7 +37,6 @@ const _backyardOptions = [
 ];
 
 const _gateAccess = [
-  {'value': 'noGate', 'label': 'No gate (open access)'},
   {'value': 'unlocked', 'label': 'Gate is unlocked'},
   {'value': 'codeLock', 'label': 'Gate has a code/lock'},
 ];
@@ -794,6 +793,101 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
           ),
         ),
 
+        // ── Gate & entry details ─────────────────────
+        if (d.backyardAccess == 'yes') ...[
+          SizedBox(height: 14.h),
+          _card(
+            bgColor: _primaryLight,
+            borderColor: _validationError == 'gate' ? Colors.red : _primaryBorder,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionTitle("Gate & entry details"),
+                Text(
+                  "Shown only when backyard drop-off is selected.",
+                  style: _caption,
+                ),
+                SizedBox(height: 6.h),
+                Text("How do we get in?", style: _label),
+                SizedBox(height: 8.h),
+                Wrap(
+                  spacing: 6.w,
+                  runSpacing: 6.h,
+                  children: _gateAccess.map((opt) {
+                    return _pillButton(
+                      opt['label'] as String,
+                      selected: d.gateEntry.accessMethod == opt['value'],
+                      onTap: () => _update(
+                        (s) => s.copyWith(
+                          gateEntry: s.gateEntry.copyWith(
+                            accessMethod: opt['value'] as String,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                SizedBox(height: 12.h),
+                Text("Gate location", style: _label),
+                SizedBox(height: 8.h),
+                Wrap(
+                  spacing: 6.w,
+                  runSpacing: 6.h,
+                  children: _gateLocations.map((loc) {
+                    final val = loc.toLowerCase().replaceAll(' side', '');
+                    return _pillButton(
+                      loc,
+                      selected: d.gateEntry.gateLocation == val,
+                      onTap: () => _update(
+                        (s) => s.copyWith(
+                          gateEntry: s.gateEntry.copyWith(gateLocation: val),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                if (d.gateEntry.accessMethod == 'codeLock') ...[
+                  SizedBox(height: 10.h),
+                  _textField(
+                    controller: _gateCodeCtrl,
+                    hint: "Gate code / lock combo (optional)",
+                    onChanged: (v) => _update(
+                      (s) => s.copyWith(
+                        gateEntry: s.gateEntry.copyWith(gateCode: v),
+                      ),
+                    ),
+                  ),
+                ],
+                SizedBox(height: 10.h),
+                Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: _primaryBorder,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 14.sp,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        "Please re-latch gate behind you",
+                        style: GoogleFonts.inter(
+                          fontSize: 11.sp,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
         SizedBox(height: 14.h),
 
         // ── Dog safety ───────────────────────────────
@@ -979,101 +1073,6 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
             ],
           ),
         ),
-
-        // ── Gate & entry details ─────────────────────
-        if (d.backyardAccess == 'yes') ...[
-          SizedBox(height: 14.h),
-          _card(
-            bgColor: _primaryLight,
-            borderColor: _validationError == 'gate' ? Colors.red : _primaryBorder,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _sectionTitle("Gate & entry details"),
-                Text(
-                  "Shown only when backyard drop-off is selected.",
-                  style: _caption,
-                ),
-                SizedBox(height: 6.h),
-                Text("How do we get in?", style: _label),
-                SizedBox(height: 8.h),
-                Wrap(
-                  spacing: 6.w,
-                  runSpacing: 6.h,
-                  children: _gateAccess.map((opt) {
-                    return _pillButton(
-                      opt['label'] as String,
-                      selected: d.gateEntry.accessMethod == opt['value'],
-                      onTap: () => _update(
-                        (s) => s.copyWith(
-                          gateEntry: s.gateEntry.copyWith(
-                            accessMethod: opt['value'] as String,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                SizedBox(height: 12.h),
-                Text("Gate location", style: _label),
-                SizedBox(height: 8.h),
-                Wrap(
-                  spacing: 6.w,
-                  runSpacing: 6.h,
-                  children: _gateLocations.map((loc) {
-                    final val = loc.toLowerCase().replaceAll(' side', '');
-                    return _pillButton(
-                      loc,
-                      selected: d.gateEntry.gateLocation == val,
-                      onTap: () => _update(
-                        (s) => s.copyWith(
-                          gateEntry: s.gateEntry.copyWith(gateLocation: val),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                if (d.gateEntry.accessMethod == 'codeLock') ...[
-                  SizedBox(height: 10.h),
-                  _textField(
-                    controller: _gateCodeCtrl,
-                    hint: "Gate code / lock combo (optional)",
-                    onChanged: (v) => _update(
-                      (s) => s.copyWith(
-                        gateEntry: s.gateEntry.copyWith(gateCode: v),
-                      ),
-                    ),
-                  ),
-                ],
-                SizedBox(height: 10.h),
-                Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: _primaryBorder,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline_rounded,
-                        size: 14.sp,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        "Please re-latch gate behind you",
-                        style: GoogleFonts.inter(
-                          fontSize: 11.sp,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
 
         SizedBox(height: 14.h),
 

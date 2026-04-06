@@ -182,6 +182,18 @@ class DriverDelivery {
   String? get crateStatus => pendingCrate?['status'] as String?;
   bool get crateApproved => crateStatus == 'paid' || crateStatus == 'delivered';
   bool get cratePending => crateStatus == 'pending_approval';
+
+  List<Map<String, dynamic>> get crateApprovedItems {
+    final raw = pendingCrate?['items'] as List<dynamic>?;
+    if (raw == null || raw.isEmpty) return [];
+    return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  List<Map<String, dynamic>> get crateRemovedItems {
+    final raw = pendingCrate?['removedItems'] as List<dynamic>?;
+    if (raw == null || raw.isEmpty) return [];
+    return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
 }
 
 class DeliveryUser {

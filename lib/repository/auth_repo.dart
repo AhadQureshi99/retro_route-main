@@ -129,6 +129,20 @@ class AuthRepo {
     }
   }
 
+  Future<Map<String, dynamic>> getUserDetails({required String token}) async {
+    try {
+      final response = await _apiServices.getApi(
+        AppUrls.getUserDetails,
+        token,
+      );
+      log("Response from get user details: $response");
+      return response as Map<String, dynamic>;
+    } catch (e) {
+      log("Error getting user details: $e");
+      rethrow;
+    }
+  }
+
   Future<Map<String, dynamic>> updateUserDetails({
     required String name,
     required String email,

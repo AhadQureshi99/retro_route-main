@@ -21,6 +21,12 @@ class NotificationServices {
   static final NotificationServices instance =
       NotificationServices._privateConstructor();
 
+  /// Holds notification data from a cold-start tap, consumed by SplashScreen.
+  Map<String, dynamic>? pendingNotificationData;
+
+  /// True when the app was launched (or resumed) via a notification tap.
+  bool openedFromNotification = false;
+
   static const String _channelDescription = "Important app notifications";
 
   /// Main initialize function
@@ -113,13 +119,16 @@ class NotificationServices {
       if (kDebugMode) {
         log("App opened from notification: ${message.notification?.title}");
       }
+      openedFromNotification = true;
       _handleNotificationNavigation(message.data);
     });
 
     // App launched from terminated state via notification tap
     final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {
-      _handleNotificationNavigation(initialMessage.data);
+      // Store the data — SplashScreen will consume it after its own navigation
+      pendingNotificationData = initialMessage.data;
+      openedFromNotification = true;
     }
   }
 
@@ -131,13 +140,26 @@ class NotificationServices {
     final ctx = rootNavigatorKey.currentContext;
     if (ctx == null) return;
 
-    if (screen != null && orderId != null) {
+    if (screen != null) {
       switch (screen) {
         case 'CrateApproval':
-          GoRouter.of(ctx).push('${AppRoutes.crateApproval}?orderId=$orderId');
-          return;
+          if (orderId != null) {
+            GoRouter.of(ctx).push('${AppRoutes.crateApproval}?orderId=$orderId');
+            return;
+          }
         case 'PoolReport':
-          GoRouter.of(ctx).push('${AppRoutes.poolReport}?orderId=$orderId');
+          if (orderId != null) {
+            GoRouter.of(ctx).push('${AppRoutes.poolReport}?orderId=$orderId');
+            return;
+          }
+        case 'OrderHistory':
+          GoRouter.of(ctx).push(AppRoutes.orderHistory);
+          return;
+        case 'DriverDeliveries':
+          GoRouter.of(ctx).push(AppRoutes.driverHome);
+          return;
+        case 'DriverOrderDetail':
+          GoRouter.of(ctx).push(AppRoutes.driverHome);
           return;
       }
     }

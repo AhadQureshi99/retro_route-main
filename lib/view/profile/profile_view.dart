@@ -767,6 +767,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 ref
                                     .read(authNotifierProvider.notifier)
                                     .logout();
+                                ref.read(cartProvider.notifier).clear();
                                 ref.invalidate(favoritesProvider);
                                 Navigator.pop(dialogContext);
                                 goRouter.go(AppRoutes.login);

@@ -146,7 +146,34 @@ class _NotificationViewState extends ConsumerState<NotificationView> {
             itemCount: notifications.length,
             itemBuilder: (context, index) {
               final notification = notifications[index];
-              return _NotificationCard(notification: notification);
+              final deleteCallback = token == null
+                  ? null
+                  : () async {
+                      await ref
+                          .read(notificationsProvider.notifier)
+                          .deleteNotification(notification.id, token);
+                    };
+              return Dismissible(
+                key: ValueKey(notification.id),
+                direction: deleteCallback != null
+                    ? DismissDirection.endToStart
+                    : DismissDirection.none,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: EdgeInsets.only(right: 20.w),
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade400,
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  child: Icon(Icons.delete_outline, color: Colors.white, size: 28.sp),
+                ),
+                onDismissed: (_) => deleteCallback?.call(),
+                child: _NotificationCard(
+                  notification: notification,
+                  onDelete: deleteCallback,
+                ),
+              );
             },
           );
         },
@@ -207,15 +234,16 @@ class _NotificationViewState extends ConsumerState<NotificationView> {
 // Notification Card Widget
 class _NotificationCard extends StatelessWidget {
   final NotificationModel notification;
+  final VoidCallback? onDelete;
 
-  const _NotificationCard({required this.notification});
+  const _NotificationCard({required this.notification, this.onDelete});
 
   void _handleTap(BuildContext context) {
     final meta = notification.metadata;
     if (meta == null) return;
     final screen = meta['screen'] as String?;
     final orderId = meta['orderId'] as String?;
-    if (screen == null || orderId == null) return;
+    if (screen == null) return;
 
     switch (screen) {
       case 'CrateApproval':
@@ -223,6 +251,13 @@ class _NotificationCard extends StatelessWidget {
         break;
       case 'PoolReport':
         goRouter.push('${AppRoutes.poolReport}?orderId=$orderId');
+        break;
+      case 'OrderHistory':
+        goRouter.push(AppRoutes.orderHistory);
+        break;
+      case 'DriverDeliveries':
+      case 'DriverOrderDetail':
+        goRouter.push(AppRoutes.driverHome);
         break;
     }
   }
@@ -250,13 +285,14 @@ class _NotificationCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.r),
       ),
-      child: Padding(
+      child: Stack(
+        children: [
+        Padding(
         padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: customText(
@@ -311,6 +347,24 @@ class _NotificationCard extends StatelessWidget {
             ],
           ],
         ),
+      ),
+          if (onDelete != null)
+            Positioned(
+              bottom: 10.h,
+              right: 10.w,
+              child: GestureDetector(
+                onTap: onDelete,
+                child: Container(
+                  padding: EdgeInsets.all(6.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.btnColor.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close, size: 26.sp, color: AppColors.btnColor),
+                ),
+              ),
+            ),
+        ],
       ),
       ),
     );

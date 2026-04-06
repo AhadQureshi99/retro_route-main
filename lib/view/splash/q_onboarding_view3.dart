@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
 import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
+import 'package:retro_route/view_model/selected_delivery_date_provider.dart';
 
 class FindMilkRunScreen extends StatefulWidget {
   const FindMilkRunScreen({super.key});
@@ -370,10 +371,11 @@ class _FindMilkRunScreenState extends State<FindMilkRunScreen> {
 
   void _handleProceed() {
     if (_selectedRoute == null) return;
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (_) => const BookMyStopScreen()),
-    // );
+    // Persist the selected delivery date so checkout picks it up
+    final deliveryDate = _getSelectedDeliveryDate();
+    if (deliveryDate != null) {
+      saveSelectedDeliveryDate(deliveryDate);
+    }
                       goRouter.go(AppRoutes.host);
 
   }
@@ -1621,13 +1623,17 @@ class _FindMilkRunContentState extends State<FindMilkRunContent> {
     if (_zone == null) return;
     final z = _zone!;
     final city = _cityCtrl.text.trim();
+    final street = _streetCtrl.text.trim();
+    final postal = _postalCtrl.text.trim();
     final selectedDate = _useCustomDate && _customDate != null
         ? _customDate!
         : getNextDeliveryDateFromDays(z.deliveryDays);
     widget.onSelectRoute({
       'zone': z,
-      'address':
-          '${_streetCtrl.text.trim()}, $city ${_postalCtrl.text.trim()}',
+      'address': '$street, $city $postal',
+      'street': street,
+      'city': city,
+      'postal': postal,
       'nextDate': selectedDate,
     });
     widget.onNext();

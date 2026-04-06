@@ -18,6 +18,7 @@ import 'package:retro_route/view_model/favourite_view_model/favourite_view_model
 import 'package:retro_route/view_model/review_view_model/review_view_model.dart';
 import 'package:retro_route/utils/app_routes.dart';
 import 'package:retro_route/view_model/bottom_nav_view_model.dart';
+import 'package:share_plus/share_plus.dart';
 
 /// Strip HTML tags and decode common HTML entities from a string.
 String _stripHtml(String html) {
@@ -832,19 +833,28 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                         ),
                       ),
                       SizedBox(width: 24.w),
-                      Row(
-                        children: [
-                          Icon(Icons.share_outlined, color: _gray500, size: 20.sp),
-                          SizedBox(width: 6.w),
-                          Text(
-                            "Share",
-                            style: GoogleFonts.inter(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
-                              color: _gray500,
+                      GestureDetector(
+                        onTap: () {
+                          final p = widget.product;
+                          final price = p.price != null ? '\$${p.price}' : '';
+                          Share.share(
+                            'Check out ${p.name ?? 'this product'} $price on Retro Route!',
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Icon(Icons.share_outlined, color: _gray500, size: 20.sp),
+                            SizedBox(width: 6.w),
+                            Text(
+                              "Share",
+                              style: GoogleFonts.inter(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                                color: _gray500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),

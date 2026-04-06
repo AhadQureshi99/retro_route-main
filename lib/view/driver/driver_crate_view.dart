@@ -22,6 +22,7 @@ class DriverCrateScreen extends ConsumerStatefulWidget {
 
 class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
   bool _submitted = false;
+  bool _submitting = false;
   bool _waitingApproval = false;
   Timer? _pollTimer;
   bool _navigatedToDeliver = false; // guard against double-push
@@ -34,6 +35,8 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
   }
 
   Future<void> _submitAndWait() async {
+    if (_submitting || _submitted) return;
+    setState(() => _submitting = true);
     final token = ref.read(authNotifierProvider).value?.data?.token ?? '';
     final ok = await ref
         .read(driverDeliveriesProvider.notifier)
@@ -42,11 +45,13 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
     if (ok) {
       setState(() {
         _submitted = true;
+        _submitting = false;
         _waitingApproval = true;
       });
       // Start polling every 5 seconds for customer approval
       _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _checkApproval());
     } else {
+      setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(ref.read(driverDeliveriesProvider).error ?? 'Failed to submit water test'),
         backgroundColor: DriverColors.red,
@@ -94,7 +99,9 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
     final hst = afterCredit * 0.13;
     final total = afterCredit + hst;
 
-    return Scaffold(
+    return PopScope(
+      canPop: !_waitingApproval,
+      child: Scaffold(
       backgroundColor: DriverColors.bg,
       body: Column(children: [
         // Header
@@ -106,6 +113,7 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
               Padding(
                 padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 0),
                 child: Row(children: [
+                  if (!_waitingApproval)
                   GestureDetector(
                     onTap: () => context.pop(),
                     child: Container(
@@ -118,6 +126,7 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
                           color: Colors.white, size: 18.sp),
                     ),
                   ),
+                  if (!_waitingApproval)
                   SizedBox(width: 12.w),
                   Expanded(
                     child: Column(
@@ -450,17 +459,27 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
-                    onPressed: _submitted ? null : _submitAndWait,
+                    onPressed: (_submitted || _submitting) ? null : _submitAndWait,
                     style: ElevatedButton.styleFrom(
                         backgroundColor: DriverColors.greenMid,
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: DriverColors.greenMid.withOpacity(0.5),
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14.r)),
                         elevation: 0),
-                    child: Text('Submit & wait for approval',
-                        style: GoogleFonts.inter(
-                            fontSize: 14.sp, fontWeight: FontWeight.w800)),
+                    child: _submitting
+                        ? SizedBox(
+                            height: 20.h,
+                            width: 20.h,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text('Submit & wait for approval',
+                            style: GoogleFonts.inter(
+                                fontSize: 14.sp, fontWeight: FontWeight.w800)),
                   ),
                 ),
               ]),
@@ -469,6 +488,7 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
           ),
         ),
       ]),
+    ),
     );
   }
 

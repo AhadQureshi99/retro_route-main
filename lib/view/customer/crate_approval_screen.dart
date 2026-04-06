@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:retro_route/model/product_model.dart';
+import 'package:retro_route/repository/order_repo.dart';
 import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
+import 'package:retro_route/utils/app_toast.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
-import 'package:retro_route/view_model/cart_view_model/cart_view_model.dart';
 import 'package:retro_route/view_model/crate_view_model/crate_view_model.dart';
 
 class CrateApprovalScreen extends ConsumerStatefulWidget {
@@ -22,6 +23,7 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
   List<Map<String, dynamic>> _items = [];
   Set<int> _enabled = {}; // indices of toggled-on items
   bool _loaded = false;
+  bool _approving = false;
 
   @override
   void initState() {
@@ -74,6 +76,9 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
   double get _total => _beforeTax + _hst;
 
   Future<void> _approve() async {
+    if (_approving) return;
+    setState(() => _approving = true);
+    try {
     final token = ref.read(authNotifierProvider).value?.data?.token ?? '';
     final enabledItems = _items.asMap().entries
         .where((e) => _enabled.contains(e.key))
@@ -86,93 +91,92 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
         );
     if (!mounted) return;
     if (result != null) {
-      final matchedProducts = result['matchedProducts'] as List<dynamic>? ?? [];
-      final cartNotifier = ref.read(cartProvider.notifier);
+      final clientSecret = result['clientSecret'] as String?;
+      final orderId = result['orderId']?.toString() ?? '';
 
-      // Build a SKU→matchedProduct lookup for fast matching
-      final Map<String, Map<String, dynamic>> matchedBySku = {};
-      for (final mp in matchedProducts) {
-        final m = Map<String, dynamic>.from(mp as Map);
-        final sku = m['sku'] as String? ?? '';
-        if (sku.isNotEmpty) matchedBySku[sku] = m;
+      if (clientSecret == null || clientSecret.isEmpty) {
+        CustomToast.error(msg: 'Crate approved but payment setup failed. Please try again from your orders.');
+        if (mounted) context.pop();
+        return;
       }
 
-      // Get the enabled items the customer actually approved
-      final enabledCrateItems = _items.asMap().entries
-          .where((e) => _enabled.contains(e.key))
-          .map((e) => e.value)
-          .toList();
-
-      int addedCount = 0;
-      for (final crateItem in enabledCrateItems) {
-        final sku = crateItem['sku'] as String? ?? '';
-        final qty = (crateItem['qty'] as num?)?.toInt() ?? 1;
-
-        if (matchedBySku.containsKey(sku)) {
-          // Use the real DB product (has images, proper ID, etc.)
-          final product = Product.fromJson(matchedBySku[sku]!);
-          cartNotifier.add(product, quantity: qty);
-          addedCount++;
-        } else {
-          // Fallback: create a Product from crate item data so cart is never empty
-          final fallbackProduct = Product(
-            id: 'crate_${sku.isNotEmpty ? sku : addedCount}',
-            name: crateItem['name'] as String? ?? 'Crate Product',
-            price: (crateItem['price'] as num?)?.toDouble() ?? 0,
-            images: const [],
-            stock: 999,
-            status: 'active',
-          );
-          cartNotifier.add(fallbackProduct, quantity: qty);
-          addedCount++;
-        }
-      }
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogCtx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.check_circle, color: AppColors.primary, size: 56.sp),
-              SizedBox(height: 12.h),
-              Text('Crate Approved!',
-                  style: GoogleFonts.inter(fontSize: 18.sp, fontWeight: FontWeight.w800)),
-              SizedBox(height: 6.h),
-              Text('Products added to your cart. Complete payment to confirm delivery.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(fontSize: 13.sp, color: Colors.grey[600])),
-            ],
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  Navigator.of(dialogCtx, rootNavigator: true).pop();
-                  // Wait for dialog dismiss animation to complete
-                  await Future.delayed(const Duration(milliseconds: 300));
-                  if (context.mounted) context.go(AppRoutes.cart);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                ),
-                child: Text('Go to Cart', style: GoogleFonts.inter(fontSize: 15.sp, fontWeight: FontWeight.w700, color: Colors.white)),
+      try {
+        // Initialize Stripe Payment Sheet
+        await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
+            paymentIntentClientSecret: clientSecret,
+            merchantDisplayName: 'Retro Route Co',
+            billingDetails: const BillingDetails(
+              address: Address(
+                city: '',
+                country: 'CA',
+                line1: '',
+                line2: '',
+                postalCode: '',
+                state: '',
               ),
             ),
-          ],
-        ),
-      );
+          ),
+        );
+
+        // Present Payment Sheet
+        await Stripe.instance.presentPaymentSheet();
+
+        // Confirm payment with backend
+        try {
+          await ref.read(orderRepoProvider).confirmPayment(
+                token: token,
+                orderId: orderId,
+              );
+        } catch (_) {}
+
+        CustomToast.success(msg: 'Payment successful! Your crate is confirmed.');
+
+        if (!mounted) return;
+        context.go(AppRoutes.success, extra: {
+          'orderId': orderId,
+          'orderNumber': result['orderNumber']?.toString() ?? '',
+          'total': (result['amount'] as num?)?.toDouble() ?? _total,
+          'deliveryZone': result['deliveryZone']?.toString() ?? '',
+          'deliveryDate': result['scheduledDeliveryDate'] != null
+              ? DateTime.tryParse(result['scheduledDeliveryDate'].toString())
+              : null,
+          'deliveryAddress': _buildAddressString(result['deliveryAddress']),
+          'customerName': result['customerName']?.toString() ?? '',
+          'customerPhone': result['customerPhone']?.toString() ?? '',
+        });
+      } on StripeException catch (e) {
+        if (e.error.code == FailureCode.Canceled) {
+          CustomToast.error(msg: 'Payment cancelled');
+        } else {
+          CustomToast.error(msg: e.error.localizedMessage ?? 'Payment failed');
+        }
+      } catch (e) {
+        CustomToast.error(msg: 'Payment error: $e');
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(ref.read(pendingCrateProvider).error ?? 'Approval failed'),
-        backgroundColor: Colors.red,
-      ));
+      CustomToast.error(msg: ref.read(pendingCrateProvider).error ?? 'Approval failed');
     }
+    } catch (e) {
+      if (mounted) CustomToast.error(msg: 'Something went wrong. Please try again.');
+    } finally {
+      if (mounted) setState(() => _approving = false);
+    }
+  }
+
+  String _buildAddressString(dynamic addr) {
+    if (addr == null) return '';
+    if (addr is String) return addr;
+    if (addr is Map) {
+      final parts = <String>[
+        addr['street']?.toString() ?? '',
+        addr['city']?.toString() ?? '',
+        addr['province']?.toString() ?? addr['state']?.toString() ?? '',
+        addr['postalCode']?.toString() ?? addr['zipCode']?.toString() ?? '',
+      ].where((s) => s.isNotEmpty).toList();
+      return parts.join(', ');
+    }
+    return '';
   }
 
   Future<void> _decline() async {
@@ -567,15 +571,16 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: crateState.isLoading ? null : _approve,
+                                onPressed: (crateState.isLoading || _approving) ? null : _approve,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
+                                  disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
                                   padding: EdgeInsets.symmetric(vertical: 16.h),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
                                   elevation: 0,
                                 ),
-                                child: crateState.isLoading
+                                child: (crateState.isLoading || _approving)
                                     ? SizedBox(
                                         height: 20.h,
                                         width: 20.w,

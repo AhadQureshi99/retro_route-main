@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:retro_route/model/login_model.dart';
 import 'package:retro_route/model/setup_profile_model.dart';
 import 'package:retro_route/repository/setup_profile_repo.dart';
@@ -9,6 +10,7 @@ import 'package:retro_route/utils/app_assets.dart';
 import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
+import 'package:retro_route/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -94,6 +96,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
         if (role.toLowerCase() == 'driver') {
           print("Navigating to DRIVER HOME because role is Driver");
           goRouter.go(AppRoutes.driverHome);
+          _consumePendingNotification();
         } else {
           // Check if user has completed setup
           final token = authData?.data?.token ?? '';
@@ -115,6 +118,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
           } else {
             print("Navigating to HOST because session is valid and setup completed");
             goRouter.go(AppRoutes.host);
+            _consumePendingNotification();
           }
         }
       } else {
@@ -122,6 +126,47 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
         goRouter.go(AppRoutes.login);
       }
     }
+  }
+
+  /// If the app was launched from a notification tap, navigate to that screen
+  /// after the normal splash flow completes.
+  void _consumePendingNotification() {
+    final data = NotificationServices.instance.pendingNotificationData;
+    if (data == null) return;
+    NotificationServices.instance.pendingNotificationData = null;
+
+    // Small delay to let GoRouter finish the go() transition
+    Future.delayed(const Duration(milliseconds: 500), () {
+      final ctx = rootNavigatorKey.currentContext;
+      if (ctx == null) return;
+
+      final screen = data['screen'] as String?;
+      final orderId = data['orderId'] as String?;
+
+      if (screen != null) {
+        switch (screen) {
+          case 'CrateApproval':
+            if (orderId != null) {
+              GoRouter.of(ctx).push('${AppRoutes.crateApproval}?orderId=$orderId');
+              return;
+            }
+          case 'PoolReport':
+            if (orderId != null) {
+              GoRouter.of(ctx).push('${AppRoutes.poolReport}?orderId=$orderId');
+              return;
+            }
+          case 'OrderHistory':
+            GoRouter.of(ctx).push(AppRoutes.orderHistory);
+            return;
+          case 'DriverDeliveries':
+          case 'DriverOrderDetail':
+            GoRouter.of(ctx).push(AppRoutes.driverHome);
+            return;
+        }
+      }
+
+      GoRouter.of(ctx).push(AppRoutes.notifications);
+    });
   }
 
   @override

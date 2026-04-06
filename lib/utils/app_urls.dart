@@ -74,7 +74,8 @@ class AppUrls {
   static const String getSetupProfile = "$baseUrl/api/v1/user/setup-profile";
   static const String saveSetupProfile = "$baseUrl/api/v1/user/setup-profile";
 
-  // ? Update user details
+  // ? Get / Update user details
+  static const String getUserDetails = "$baseUrl/api/v1/user/get-user-details";
   static const String updateUserDetails = "$baseUrl/api/v1/user/update-user-details";
 
   // ? Delete account

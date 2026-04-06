@@ -41,6 +41,12 @@ class OrderDetailsScreen extends StatelessWidget {
                     color: order.paymentStatus == "Paid" ? Colors.green : Colors.orange),
                 _buildRow("Total Amount", "\$${order.total.toStringAsFixed(2)}",
                     isBold: true),
+                if (order.deliveryZone.isNotEmpty)
+                  _buildRow("Zone", order.deliveryZone),
+                if (order.deliveryDay.isNotEmpty)
+                  _buildRow("Delivery Day", order.deliveryDay),
+                if (order.scheduledDeliveryDate != null)
+                  _buildRow("Delivery Date", dateFormat.format(order.scheduledDeliveryDate!.toLocal())),
               ],
             ),
 

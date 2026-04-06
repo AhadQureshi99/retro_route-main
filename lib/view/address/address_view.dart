@@ -201,7 +201,7 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
                 16.w,
                 12.h,
                 16.w,
-                12.h + MediaQuery.of(context).padding.bottom,
+                16.h + MediaQuery.of(context).padding.bottom + 60.h,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -349,6 +349,29 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
                 style: GoogleFonts.inter(
                     fontSize: 16.sp, color: Colors.grey.shade700),
                 textAlign: TextAlign.center),
+            verticalSpacer(height: 24.h),
+            SizedBox(
+              width: 220.w,
+              height: 50.h,
+              child: ElevatedButton.icon(
+                onPressed: () => _pushAddAddress(context),
+                icon: Icon(Icons.add, size: 20.sp),
+                label: Text(
+                  "Add Address",
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.btnColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

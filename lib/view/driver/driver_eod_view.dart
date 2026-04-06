@@ -53,11 +53,13 @@ class _DriverEodScreenState extends ConsumerState<DriverEodScreen> {
 
   void _calculateKm() {
     final eodReading = double.tryParse(_eodReadingCtrl.text.trim()) ?? 0;
-    if (_sodReading > 0 && eodReading > _sodReading) {
+    if (_sodReading > 0 && eodReading >= _sodReading) {
       final driven = eodReading - _sodReading;
       _km.text = driven.toStringAsFixed(0);
-      setState(() {});
+    } else if (eodReading <= 0) {
+      _km.text = '0';
     }
+    setState(() {});
   }
 
   Future<void> _pickEodImage() async {
@@ -429,9 +431,22 @@ class _DriverEodScreenState extends ConsumerState<DriverEodScreen> {
                     TextField(
                       controller: _km,
                       keyboardType: TextInputType.number,
+                      readOnly: _sodReading > 0,
+                      style: GoogleFonts.inter(
+                        color: _sodReading > 0
+                            ? DriverColors.textMuted
+                            : DriverColors.text,
+                      ),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: DriverColors.bg,
+                        fillColor: _sodReading > 0
+                            ? DriverColors.bg.withOpacity(0.6)
+                            : DriverColors.bg,
+                        suffixText: _sodReading > 0 ? 'auto-calculated' : null,
+                        suffixStyle: GoogleFonts.inter(
+                            fontSize: 10.sp,
+                            color: DriverColors.green,
+                            fontWeight: FontWeight.w600),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10.r),
                             borderSide:

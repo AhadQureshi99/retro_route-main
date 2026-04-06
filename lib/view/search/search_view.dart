@@ -379,16 +379,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         // ── Subcategory chips (when category with subs is selected) ──
                         if (selectedCat != null && selectedCat.hasSubcategories) ...[
                           verticalSpacer(height: 8),
-                          SizedBox(
-                            height: 85.w,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: selectedCat.subcategories.length,
-                              itemBuilder: (context, index) {
-                                final sub = selectedCat.subcategories[index];
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: selectedCat.subcategories.map((sub) {
                                 final isSubSelected = selectedSub?.id == sub.id;
                                 return Padding(
-                                  padding: EdgeInsets.only(right: 8.w),
+                                  padding: EdgeInsets.only(right: 10.w),
                                   child: GestureDetector(
                                     onTap: () {
                                       if (isSubSelected) {
@@ -398,14 +395,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                       }
                                     },
                                     child: Container(
-                                      width: 110.w,
-                                      height: 85.w,
+                                      width: 160.w,
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(12.r),
                                         border: isSubSelected
                                             ? Border.all(
                                                 color: AppColors.btnColor,
-                                                width: 2.5,
+                                                width: 3,
                                               )
                                             : Border.all(
                                                 color: Colors.grey[300]!,
@@ -413,27 +409,31 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                               ),
                                       ),
                                       child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(isSubSelected ? 9.5.r : 11.r),
+                                        borderRadius: BorderRadius.circular(isSubSelected ? 9.r : 11.r),
                                         child: CachedNetworkImage(
                                           imageUrl: sub.safeImage,
                                           width: double.infinity,
-                                          height: double.infinity,
+                                          height: 110.h,
                                           fit: BoxFit.cover,
                                           placeholder: (ctx, url) => Shimmer.fromColors(
                                             baseColor: Colors.grey[300]!,
                                             highlightColor: Colors.grey[100]!,
-                                            child: Container(color: Colors.white),
+                                            child: Container(
+                                              height: 110.h,
+                                              color: Colors.white,
+                                            ),
                                           ),
                                           errorWidget: (ctx, url, err) => Container(
+                                            height: 110.h,
                                             color: Colors.grey[200],
-                                            child: Icon(Icons.category_rounded, size: 20.sp, color: Colors.grey[400]),
+                                            child: Icon(Icons.category_rounded, size: 24.sp, color: Colors.grey[400]),
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 );
-                              },
+                              }).toList(),
                             ),
                           ),
                         ],

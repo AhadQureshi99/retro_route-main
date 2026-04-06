@@ -34,19 +34,22 @@ class CustomToast {
     };
 
     _fToast.showToast(
-      child: Container(
-        width: 1.sw,
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          color: bgColor.withValues(alpha:0.95),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 12),
-            Expanded(child: Text(message, style: TextStyle(color: Colors.white, fontSize: 16))),
-          ],
+      child: GestureDetector(
+        onTap: () => _fToast.removeCustomToast(),
+        child: Container(
+          width: 1.sw,
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: bgColor.withValues(alpha:0.95),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 12),
+              Expanded(child: Text(message, style: TextStyle(color: Colors.white, fontSize: 16))),
+            ],
+          ),
         ),
       ),
       gravity: gravity,

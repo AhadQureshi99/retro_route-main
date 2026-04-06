@@ -424,6 +424,14 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
         if (ds.backyardAccess == 'yes')
           _infoRow(
               "Backyard permission", ds.backyardPermission ? "Yes" : "No"),
+        if (ds.backyardAccess == 'yes') ...[
+          _infoRow(
+              "Gate access", _gateAccessLabels[ds.gateEntry.accessMethod]),
+          _infoRow("Gate location",
+              _gateLocationLabels[ds.gateEntry.gateLocation]),
+          if (ds.gateEntry.gateCode.isNotEmpty)
+            _infoRow("Gate code", ds.gateEntry.gateCode),
+        ],
         _infoRow("Dogs in yard", ds.dogSafety.hasDogs ? "Yes" : "No"),
         if (ds.dogSafety.hasDogs) ...[
           _infoRow(
@@ -436,14 +444,6 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
           ),
           if (ds.dogSafety.dogNotes.isNotEmpty)
             _infoRow("Dog notes", ds.dogSafety.dogNotes),
-        ],
-        if (ds.backyardAccess == 'yes') ...[
-          _infoRow(
-              "Gate access", _gateAccessLabels[ds.gateEntry.accessMethod]),
-          _infoRow("Gate location",
-              _gateLocationLabels[ds.gateEntry.gateLocation]),
-          if (ds.gateEntry.gateCode.isNotEmpty)
-            _infoRow("Gate code", ds.gateEntry.gateCode),
         ],
         _infoRow("Contact preference", _contactLabels[ds.contactPreference]),
         SizedBox(height: 12.h),

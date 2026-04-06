@@ -285,6 +285,12 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
                   final galVal = _volumeUnit == 'liters' ? _lToGal(val) : val;
                   _update(w.copyWith(pool: w.pool.copyWith(estimatedVolume: galVal)));
                 }),
+                if (_poolVolumeCtrl.text.isEmpty || (int.tryParse(_poolVolumeCtrl.text) ?? 0) <= 0)
+                  Padding(
+                    padding: EdgeInsets.only(top: 4.h),
+                    child: Text("Pool volume is required",
+                        style: GoogleFonts.inter(fontSize: 11.sp, color: Colors.red)),
+                  ),
               ],
 
               // ── Add Other free-text field ──

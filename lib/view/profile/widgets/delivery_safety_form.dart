@@ -774,6 +774,91 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
         ),
         SizedBox(height: 16.h),
 
+        // ── Gate & entry details ──
+        if (d.backyardAccess == 'yes') ...[
+          _buildSection(
+            color: _lightBlue,
+            borderColor: _borderBlue,
+            children: [
+              _label("Gate & entry details"),
+              _sublabel("Shown only when backyard drop-off is selected."),
+              SizedBox(height: 8.h),
+              _smallLabel("How do we get in?"),
+              SizedBox(height: 8.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: [
+                  {'value': 'unlocked', 'label': 'Gate is unlocked'},
+                  {'value': 'codeLock', 'label': 'Gate has a code/lock'},
+                ]
+                    .map((opt) => _chip(
+                          label: opt['label']!,
+                          selected:
+                              d.gateEntry.accessMethod == opt['value'],
+                          onTap: () => _update(d.copyWith(
+                              gateEntry: d.gateEntry
+                                  .copyWith(accessMethod: opt['value']))),
+                        activeColor: AppColors.primary,
+                        ))
+                    .toList(),
+              ),
+              SizedBox(height: 12.h),
+              _smallLabel("Gate location"),
+              SizedBox(height: 8.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: [
+                  {'value': 'left', 'label': 'Left side'},
+                  {'value': 'right', 'label': 'Right side'},
+                  {'value': 'back', 'label': 'Back'},
+                  {'value': 'other', 'label': 'Other'},
+                ]
+                    .map((opt) => _chip(
+                          label: opt['label']!,
+                          selected:
+                              d.gateEntry.gateLocation == opt['value'],
+                          onTap: () => _update(d.copyWith(
+                              gateEntry: d.gateEntry
+                                  .copyWith(gateLocation: opt['value']))),
+                        activeColor: AppColors.primary,
+                        ))
+                    .toList(),
+              ),
+              if (d.gateEntry.accessMethod == 'codeLock') ...[
+                SizedBox(height: 10.h),
+                _textField(
+                  controller: _gateCodeCtrl,
+                  hint: "Gate code / lock combo (optional)",
+                  onChanged: (v) => _update(d.copyWith(
+                      gateEntry: d.gateEntry.copyWith(gateCode: v))),
+                ),
+              ],
+              SizedBox(height: 10.h),
+              Container(
+                padding: EdgeInsets.all(10.w),
+                decoration: BoxDecoration(
+                  color: _borderBlue,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 14.sp, color: _darkBlue),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text("Please re-latch gate behind you",
+                          style: GoogleFonts.inter(
+                              fontSize: 14.sp, color: _darkBlue)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+        ],
+
         // ── Dog safety (read-only in profile) ──
         IgnorePointer(
           ignoring: true,
@@ -926,92 +1011,6 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
         ),
         ),
         SizedBox(height: 16.h),
-
-        // ── Gate & entry details ──
-        if (d.backyardAccess == 'yes') ...[
-          _buildSection(
-            color: _lightBlue,
-            borderColor: _borderBlue,
-            children: [
-              _label("Gate & entry details"),
-              _sublabel("Shown only when backyard drop-off is selected."),
-              SizedBox(height: 8.h),
-              _smallLabel("How do we get in?"),
-              SizedBox(height: 8.h),
-              Wrap(
-                spacing: 8.w,
-                runSpacing: 8.h,
-                children: [
-                  {'value': 'noGate', 'label': 'No gate (open access)'},
-                  {'value': 'unlocked', 'label': 'Gate is unlocked'},
-                  {'value': 'codeLock', 'label': 'Gate has a code/lock'},
-                ]
-                    .map((opt) => _chip(
-                          label: opt['label']!,
-                          selected:
-                              d.gateEntry.accessMethod == opt['value'],
-                          onTap: () => _update(d.copyWith(
-                              gateEntry: d.gateEntry
-                                  .copyWith(accessMethod: opt['value']))),
-                        activeColor: AppColors.primary,
-                        ))
-                    .toList(),
-              ),
-              SizedBox(height: 12.h),
-              _smallLabel("Gate location"),
-              SizedBox(height: 8.h),
-              Wrap(
-                spacing: 8.w,
-                runSpacing: 8.h,
-                children: [
-                  {'value': 'left', 'label': 'Left side'},
-                  {'value': 'right', 'label': 'Right side'},
-                  {'value': 'back', 'label': 'Back'},
-                  {'value': 'other', 'label': 'Other'},
-                ]
-                    .map((opt) => _chip(
-                          label: opt['label']!,
-                          selected:
-                              d.gateEntry.gateLocation == opt['value'],
-                          onTap: () => _update(d.copyWith(
-                              gateEntry: d.gateEntry
-                                  .copyWith(gateLocation: opt['value']))),
-                        activeColor: AppColors.primary,
-                        ))
-                    .toList(),
-              ),
-              if (d.gateEntry.accessMethod == 'codeLock') ...[
-                SizedBox(height: 10.h),
-                _textField(
-                  controller: _gateCodeCtrl,
-                  hint: "Gate code / lock combo (optional)",
-                  onChanged: (v) => _update(d.copyWith(
-                      gateEntry: d.gateEntry.copyWith(gateCode: v))),
-                ),
-              ],
-              SizedBox(height: 10.h),
-              Container(
-                padding: EdgeInsets.all(10.w),
-                decoration: BoxDecoration(
-                  color: _borderBlue,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 14.sp, color: _darkBlue),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text("Please re-latch gate behind you",
-                          style: GoogleFonts.inter(
-                              fontSize: 14.sp, color: _darkBlue)),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-        ],
 
         // ── Contact & proof ──
         _buildSection(

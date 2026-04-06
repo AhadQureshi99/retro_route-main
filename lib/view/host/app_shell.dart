@@ -16,17 +16,20 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(bottomNavProvider);
     final cartItemCount = ref.watch(cartProvider).itemCount;
+    final isProcessingPayment = ref.watch(paymentProcessingProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bgColor,
       body: child,
-      bottomNavigationBar: SafeArea(
+      bottomNavigationBar: IgnorePointer(
+        ignoring: isProcessingPayment,
+        child: SafeArea(
         child: CurvedNavigationBar(
           index: selectedIndex,
           backgroundColor: AppColors.bgColor,
           color: AppColors.primary,
           buttonBackgroundColor: AppColors.primary,
-          animationDuration: const Duration(milliseconds: 600),
+          animationDuration: const Duration(milliseconds: 300),
           animationCurve: Curves.easeInOut,
           height: 50,
           onTap: (index) {
@@ -70,6 +73,7 @@ class AppShell extends ConsumerWidget {
             const Icon(Icons.person, size: 30, color: Colors.white),
           ],
         ),
+      ),
       ),
     );
   }

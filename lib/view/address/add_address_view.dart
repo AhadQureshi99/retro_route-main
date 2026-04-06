@@ -994,333 +994,6 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Delivery Location Map ───────────────────────────
-                Container(
-                  padding: EdgeInsets.all(14.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey.shade200),
-                    borderRadius: BorderRadius.circular(14.r),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.pin_drop_outlined,
-                              color: AppColors.black, size: 20.sp),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: customText(
-                              text: 'Pin Delivery Location',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.black,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => setState(() => _showMap = !_showMap),
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size(60.w, 30.h),
-                            ),
-                            child: Text(
-                              _showMap ? 'Hide' : 'Show Coordinates',
-                              style: GoogleFonts.inter(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.btnColor,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        'Tap the map or drag the pin to set your exact delivery spot.',
-                        style: GoogleFonts.inter(
-                            fontSize: 14.sp, color: Colors.grey.shade900),
-                      ),
-                      // "Use my current location" shortcut
-                      if (_currentLat != null)
-                        Padding(
-                          padding: EdgeInsets.only(top: 6.h),
-                          child: GestureDetector(
-                            onTap: () {
-                              final pos = LatLng(_currentLat!, _currentLon!);
-                              setState(() {
-                                _markerPos = pos;
-                                _deliveryLat = _currentLat;
-                                _deliveryLon = _currentLon;
-                                _showMap = true;
-                                _suggestions = [];
-                                _showSuggestions = false;
-                              });
-                              _safeAnimateCamera(pos);
-                              _reverseGeocodeMarker(pos);
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.my_location,
-                                    size: 14.sp, color: AppColors.primary),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  'Use my current location',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else if (_fetchingLocation)
-                        Padding(
-                          padding: EdgeInsets.only(top: 6.h),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 12.sp,
-                                height: 12.sp,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 1.5,
-                                    color: AppColors.primary),
-                              ),
-                              SizedBox(width: 6.w),
-                              Text('Getting your location…',
-                                  style: GoogleFonts.inter(
-                                      fontSize: 14.sp,
-                                      color: Colors.grey.shade900)),
-                            ],
-                          ),
-                        ),
-                      if (_showMap) ...[
-                        verticalSpacer(height: 10.h),
-                        // ── Map location search bar ──
-                        TextField(
-                          controller: _mapSearchCtrl,
-                          textInputAction: TextInputAction.search,
-                          onChanged: _onMapSearchChanged,
-                          onSubmitted: _searchMapLocation,
-                          decoration: InputDecoration(
-                            hintText: 'Search location on map…',
-                            hintStyle: GoogleFonts.inter(
-                                fontSize: 14.sp, color: Colors.grey.shade900),
-                            prefixIcon: Icon(Icons.search_rounded,
-                                color: AppColors.primary, size: 20.sp),
-                            suffixIcon: _searchingMapLocation
-                                ? Padding(
-                                    padding: EdgeInsets.all(12.w),
-                                    child: SizedBox(
-                                      width: 16.sp,
-                                      height: 16.sp,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: AppColors.primary),
-                                    ),
-                                  )
-                                : _mapSearchCtrl.text.isNotEmpty
-                                    ? IconButton(
-                                        icon: Icon(Icons.close_rounded,
-                                            size: 18.sp,
-                                            color: Colors.grey.shade500),
-                                        onPressed: () => setState(() {
-                                          _mapSearchCtrl.clear();
-                                          _mapSuggestions = [];
-                                        }),
-                                      )
-                                    : null,
-                            contentPadding: EdgeInsets.symmetric(
-                                vertical: 12.h, horizontal: 16.w),
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.r),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade300),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.r),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade300),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.r),
-                              borderSide: BorderSide(
-                                  color: AppColors.primary, width: 1.5),
-                            ),
-                          ),
-                        ),
-                        // ── Suggestions dropdown ──
-                        if (_mapSuggestions.isNotEmpty)
-                          Container(
-                            margin: EdgeInsets.only(top: 2.h),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(color: Colors.grey.shade200),
-                              borderRadius: BorderRadius.circular(10.r),
-                              boxShadow: const [
-                                BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 8,
-                                    offset: Offset(0, 3)),
-                              ],
-                            ),
-                            child: Column(
-                              children: _mapSuggestions.asMap().entries.map((entry) {
-                                final idx = entry.key;
-                                final s = entry.value;
-                                final label = s['label'] as String? ?? '';
-                                final display = s['display'] as String? ?? '';
-                                final isLast = idx == _mapSuggestions.length - 1;
-                                return Column(
-                                  children: [
-                                    InkWell(
-                                      onTap: () => _selectMapSuggestion(s),
-                                      borderRadius: BorderRadius.circular(10.r),
-                                      child: Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 12.w, vertical: 10.h),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Padding(
-                                              padding:
-                                                  EdgeInsets.only(top: 2.h),
-                                              child: Icon(
-                                                  Icons.location_on_outlined,
-                                                  size: 16.sp,
-                                                  color: AppColors.primary),
-                                            ),
-                                            SizedBox(width: 8.w),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    label.isNotEmpty
-                                                        ? label
-                                                        : display,
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: GoogleFonts.inter(
-                                                      fontSize: 14.sp,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: Colors.black,
-                                                    ),
-                                                  ),
-                                                  if (display.isNotEmpty)
-                                                    Text(
-                                                      display,
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: GoogleFonts.inter(
-                                                        fontSize: 11.sp,
-                                                        color: Colors
-                                                            .grey.shade500,
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    if (!isLast)
-                                      Divider(
-                                          height: 1,
-                                          color: Colors.grey.shade100,
-                                          indent: 36.w),
-                                  ],
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        verticalSpacer(height: 8.h),
-                        if (_deliveryLat != null)
-                          Padding(
-                            padding: EdgeInsets.only(top: 8.h),
-                            child: Row(
-                              children: [
-                                Icon(Icons.check_circle_outline,
-                                    size: 14.sp, color: Colors.green.shade600),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  'Pinned: ${_deliveryLat!.toStringAsFixed(5)}, ${_deliveryLon!.toStringAsFixed(5)}',
-                                  style: GoogleFonts.inter(
-                                      fontSize: 14.sp,
-                                      color: Colors.green.shade700,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ],
-                  ),
-                ),
-                verticalSpacer(height: 16.h),
-
-                // Current location status chip
-                Row(
-                  children: [
-                    Icon(
-                      _fetchingLocation
-                          ? Icons.gps_not_fixed
-                          : _currentLat != null
-                              ? Icons.gps_fixed
-                              : Icons.gps_off,
-                      size: 18.sp,
-                      color: _fetchingLocation
-                          ? Colors.orange
-                          : _currentLat != null
-                              ? Colors.green.shade600
-                              : Colors.grey,
-                    ),
-                    SizedBox(width: 6.w),
-                    Text(
-                      _fetchingLocation
-                          ? 'Acquiring your location…'
-                          : _currentLat != null
-                              ? 'Current location captured'
-                              : 'Current location unavailable',
-                      style: GoogleFonts.inter(
-                        fontSize: 14.sp,
-                        color: _fetchingLocation
-                            ? Colors.orange
-                            : _currentLat != null
-                                ? Colors.green.shade900
-                                : Colors.grey,
-                      ),
-                    ),
-                    if (_fetchingLocation) ...
-                      [
-                        SizedBox(width: 8.w),
-                        SizedBox(
-                          width: 10.w,
-                          height: 10.w,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            color: Colors.orange,
-                          ),
-                        ),
-                      ],
-                  ],
-                ),
-                verticalSpacer(height: 12),
-
                 // 1. Full Name
                 customText(
                   text: "Full Name",
@@ -1371,11 +1044,67 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                 verticalSpacer(height: 12),
 
                 // 2. Address Line with autocomplete
-                customText(
-                  text: "Address Line",
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                Row(
+                  children: [
+                    Expanded(
+                      child: customText(
+                        text: "Address Line",
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    if (_currentLat != null)
+                      GestureDetector(
+                        onTap: () {
+                          final pos = LatLng(_currentLat!, _currentLon!);
+                          setState(() {
+                            _markerPos = pos;
+                            _deliveryLat = _currentLat;
+                            _deliveryLon = _currentLon;
+                            _showMap = true;
+                            _suggestions = [];
+                            _showSuggestions = false;
+                          });
+                          _safeAnimateCamera(pos);
+                          _reverseGeocodeMarker(pos);
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.my_location,
+                                size: 14.sp, color: AppColors.primary),
+                            SizedBox(width: 4.w),
+                            Text(
+                              'Use my location',
+                              style: GoogleFonts.inter(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (_fetchingLocation)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 12.sp,
+                            height: 12.sp,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: AppColors.primary),
+                          ),
+                          SizedBox(width: 6.w),
+                          Text('Getting location…',
+                              style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  color: Colors.grey.shade500)),
+                        ],
+                      ),
+                  ],
                 ),
                 verticalSpacer(height: 8),
                 CustomTextField(
@@ -1500,22 +1229,184 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                       ],
                     ),
                   ),
-                // Delivery pin indicator
-                if (_deliveryLat != null)
+                // ── Pin & coordinates toggle ──
+                if (_deliveryLat != null || _showMap)
                   Padding(
                     padding: EdgeInsets.only(top: 6.h),
                     child: Row(
                       children: [
-                        Icon(Icons.pin_drop, size: 18.sp, color: Colors.green.shade600),
-                        SizedBox(width: 4.w),
-                        Text(
-                          'Delivery pin: ${_deliveryLat!.toStringAsFixed(4)}, ${_deliveryLon!.toStringAsFixed(4)}',
-                          style: GoogleFonts.inter(
-                              fontSize: 14.sp, color: Colors.green.shade700),
+                        if (_deliveryLat != null) ...[
+                          Icon(Icons.pin_drop, size: 16.sp, color: Colors.green.shade600),
+                          SizedBox(width: 4.w),
+                          Expanded(
+                            child: Text(
+                              '${_deliveryLat!.toStringAsFixed(5)}, ${_deliveryLon!.toStringAsFixed(5)}',
+                              style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  color: Colors.green.shade700,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ] else
+                          const Spacer(),
+                        GestureDetector(
+                          onTap: () => setState(() => _showMap = !_showMap),
+                          child: Text(
+                            _showMap ? 'Hide Map' : 'Show Map',
+                            style: GoogleFonts.inter(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.btnColor,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
+                if (_showMap) ...[
+                  verticalSpacer(height: 8.h),
+                  // ── Map location search bar ──
+                  TextField(
+                    controller: _mapSearchCtrl,
+                    textInputAction: TextInputAction.search,
+                    onChanged: _onMapSearchChanged,
+                    onSubmitted: _searchMapLocation,
+                    decoration: InputDecoration(
+                      hintText: 'Search location on map…',
+                      hintStyle: GoogleFonts.inter(
+                          fontSize: 14.sp, color: Colors.grey.shade900),
+                      prefixIcon: Icon(Icons.search_rounded,
+                          color: AppColors.primary, size: 20.sp),
+                      suffixIcon: _searchingMapLocation
+                          ? Padding(
+                              padding: EdgeInsets.all(12.w),
+                              child: SizedBox(
+                                width: 16.sp,
+                                height: 16.sp,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.primary),
+                              ),
+                            )
+                          : _mapSearchCtrl.text.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(Icons.close_rounded,
+                                      size: 18.sp,
+                                      color: Colors.grey.shade500),
+                                  onPressed: () => setState(() {
+                                    _mapSearchCtrl.clear();
+                                    _mapSuggestions = [];
+                                  }),
+                                )
+                              : null,
+                      contentPadding: EdgeInsets.symmetric(
+                          vertical: 12.h, horizontal: 16.w),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                        borderSide: BorderSide(
+                            color: AppColors.primary, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  // ── Map suggestions dropdown ──
+                  if (_mapSuggestions.isNotEmpty)
+                    Container(
+                      margin: EdgeInsets.only(top: 2.h),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.grey.shade200),
+                        borderRadius: BorderRadius.circular(10.r),
+                        boxShadow: const [
+                          BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 8,
+                              offset: Offset(0, 3)),
+                        ],
+                      ),
+                      child: Column(
+                        children: _mapSuggestions.asMap().entries.map((entry) {
+                          final idx = entry.key;
+                          final s = entry.value;
+                          final label = s['label'] as String? ?? '';
+                          final display = s['display'] as String? ?? '';
+                          final isLast = idx == _mapSuggestions.length - 1;
+                          return Column(
+                            children: [
+                              InkWell(
+                                onTap: () => _selectMapSuggestion(s),
+                                borderRadius: BorderRadius.circular(10.r),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12.w, vertical: 10.h),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsets.only(top: 2.h),
+                                        child: Icon(
+                                            Icons.location_on_outlined,
+                                            size: 16.sp,
+                                            color: AppColors.primary),
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              label.isNotEmpty
+                                                  ? label
+                                                  : display,
+                                              maxLines: 1,
+                                              overflow:
+                                                  TextOverflow.ellipsis,
+                                              style: GoogleFonts.inter(
+                                                fontSize: 14.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            if (display.isNotEmpty)
+                                              Text(
+                                                display,
+                                                maxLines: 1,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 11.sp,
+                                                  color: Colors.grey.shade500,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (!isLast)
+                                Divider(
+                                    height: 1,
+                                    color: Colors.grey.shade100,
+                                    indent: 36.w),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                ],
                 verticalSpacer(height: 12),
 
                 // 3. City + State/Province (side by side)
@@ -1632,7 +1523,11 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                 verticalSpacer(height: 20.h),
 
                 // ── Green Delivery Zone Card ─────────────────────────
-                if (_detectedZone != null) _buildDeliveryZoneCard(),
+                // Show when zone detected, or initially when city not yet typed
+                // Hide only when city is typed and out of zone
+                if (_detectedZone != null ||
+                    _cityCtrl.text.trim().length < 3)
+                  _buildDeliveryZoneCard(),
 
                 verticalSpacer(height: 24.h),
 
@@ -1844,7 +1739,7 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
 
   // ── Green Delivery Zone Card ──────────────────────────────────────────
   Widget _buildDeliveryZoneCard() {
-    final zone = _detectedZone!;
+    final zone = _detectedZone ?? deliveryZones.first;
     final deliveryDate = _useCustomDate && _customDate != null
         ? _customDate!
         : getNextDeliveryDateFromDays(zone.deliveryDays);

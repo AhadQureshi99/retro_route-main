@@ -112,12 +112,9 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
     super.dispose();
   }
 
-  // Cache these once so we don't re-watch every frame
-  late final _crate = ref.read(driverDeliveriesProvider).generatedCrate;
-  late final double _total = () {
-    final ct = _crate.fold<double>(0, (s, c) => s + c.lineTotal);
-    return ct > 0 ? ct : widget.delivery.safeTotal;
-  }();
+  // Use the delivery model's approved data (updated by backend after crate approval)
+  late final List<Map<String, dynamic>> _approvedItems = widget.delivery.crateApprovedItems;
+  late final double _total = widget.delivery.safeTotal;
   late final DriverDelivery? _nextOrder = () {
     final activeOrders = ref.read(driverDeliveriesProvider).filteredActiveDeliveries;
     final idx = activeOrders.indexWhere((o) => o.id == widget.delivery.id);
@@ -127,7 +124,7 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
   @override
   Widget build(BuildContext context) {
     final total = _total;
-    final crate = _crate;
+    final approvedItems = _approvedItems;
     final nextOrder = _nextOrder;
 
     return Scaffold(
@@ -194,7 +191,7 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
             padding: EdgeInsets.all(16.w),
             child: Column(children: [
               // Approved banner
-              if (crate.isNotEmpty)
+              if (approvedItems.isNotEmpty)
                 Container(
                   padding: EdgeInsets.all(12.w),
                   margin: EdgeInsets.only(bottom: 12.h),
@@ -215,7 +212,7 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
                                   fontWeight: FontWeight.w800,
                                   color: DriverColors.green)),
                           Text(
-                              '${crate.length} items · \$${total.toStringAsFixed(2)}',
+                              '${approvedItems.length} items · \$${total.toStringAsFixed(2)}',
                               style: GoogleFonts.inter(
                                   fontSize: 11.sp,
                                   color: DriverColors.green,
@@ -224,6 +221,102 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
                       ),
                     ),
                   ]),
+                ),
+
+              // Removed items section
+              if (widget.delivery.crateRemovedItems.isNotEmpty)
+                Container(
+                  padding: EdgeInsets.all(12.w),
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3E0),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: DriverColors.amber.withOpacity(0.3))),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Icon(Icons.remove_circle_outline,
+                            color: DriverColors.red, size: 18.sp),
+                        SizedBox(width: 8.w),
+                        Text(
+                            'REMOVED BY CUSTOMER (${widget.delivery.crateRemovedItems.length})',
+                            style: GoogleFonts.inter(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w700,
+                                color: DriverColors.red,
+                                letterSpacing: 0.8)),
+                      ]),
+                      SizedBox(height: 8.h),
+                      ...widget.delivery.crateRemovedItems.map((item) {
+                        final name = item['name'] ?? '';
+                        final sku = item['sku'] ?? '';
+                        final qty = (item['qty'] as num?)?.toInt() ?? 1;
+                        final price = (item['price'] as num?)?.toDouble() ?? 0;
+                        final reason = item['reason'] ?? '';
+                        final size = item['size'] ?? '';
+                        final urgent = item['urgent'] == true;
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 6.h),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 10.w,
+                                height: 10.w,
+                                margin: EdgeInsets.only(top: 3.h),
+                                decoration: BoxDecoration(
+                                  color: urgent
+                                      ? DriverColors.red
+                                      : DriverColors.textHint,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              SizedBox(width: 10.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    RichText(
+                                      text: TextSpan(children: [
+                                        TextSpan(
+                                          text: name,
+                                          style: GoogleFonts.inter(
+                                              fontSize: 13.sp,
+                                              fontWeight: FontWeight.w800,
+                                              color: DriverColors.text,
+                                              decoration:
+                                                  TextDecoration.lineThrough)),
+                                        TextSpan(
+                                          text: ' ×$qty',
+                                          style: GoogleFonts.inter(
+                                              fontSize: 11.sp,
+                                              fontWeight: FontWeight.w500,
+                                              color: DriverColors.textMuted)),
+                                        if (size.isNotEmpty)
+                                          TextSpan(
+                                            text: ' · $size',
+                                            style: GoogleFonts.inter(
+                                                fontSize: 11.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: DriverColors.textMuted)),
+                                      ]),
+                                    ),
+                                    Text(
+                                        '${reason.isNotEmpty ? reason : 'N/A'} (SKU $sku) · \$${(price * qty).toStringAsFixed(2)}',
+                                        style: GoogleFonts.inter(
+                                            fontSize: 10.sp,
+                                            fontWeight: FontWeight.w500,
+                                            color: DriverColors.textHint)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
                 ),
 
               // Checklist

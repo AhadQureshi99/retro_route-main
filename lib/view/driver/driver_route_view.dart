@@ -31,13 +31,18 @@ class _DriverRouteScreenState extends ConsumerState<DriverRouteScreen> {
   Future<void> _openGoogleMaps(List<DriverDelivery> orders) async {
     if (orders.isEmpty) return;
 
-    // Only use stops that have valid GPS coordinates
+    // Use GPS coordinates when available, otherwise fall back to text address
     final stops = <String>[];
     for (final o in orders) {
       final lat = o.deliveryAddress?.deliveryLat;
       final lon = o.deliveryAddress?.deliveryLon;
       if (lat != null && lon != null) {
         stops.add('$lat,$lon');
+      } else {
+        final addr = o.deliveryAddress?.fullAddress;
+        if (addr != null && addr.isNotEmpty) {
+          stops.add(Uri.encodeComponent(addr));
+        }
       }
     }
     if (stops.isEmpty) return;
@@ -87,8 +92,13 @@ class _DriverRouteScreenState extends ConsumerState<DriverRouteScreen> {
         '&travelmode=driving';
     if (waypoints.isNotEmpty) url += '&waypoints=$waypoints';
 
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    final uri = Uri.parse(url);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // Fallback: open in browser
+      await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication)
+          .catchError((_) => false);
     }
   }
 

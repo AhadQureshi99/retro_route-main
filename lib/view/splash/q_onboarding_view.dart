@@ -9,6 +9,9 @@ import 'package:retro_route/utils/app_toast.dart';
 import 'package:retro_route/view/splash/q_onboarding_view2.dart';
 import 'package:retro_route/view/splash/q_onboarding_view3.dart';
 import 'package:retro_route/view/splash/q_onboarding_view4.dart';
+import 'package:retro_route/view_model/address_view_model/address_view_model.dart';
+import 'package:retro_route/view_model/address_view_model/selected_delivery_address_view_model.dart';
+import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/view_model/bottom_nav_view_model.dart';
 import 'package:retro_route/view_model/cart_view_model/cart_view_model.dart';
 import 'package:retro_route/config/delivery_zones.dart';
@@ -106,9 +109,57 @@ class _OnboardingState extends ConsumerState<QuestionOnboardingScreenOne> {
     }
   }
 
+  /// Creates a server-side address from onboarding data and selects it + the
+  /// delivery date so checkout can pick them up.
+  Future<void> _createAndSelectAddress() async {
+    if (_routeInfo == null) return;
+    final token = ref.read(authNotifierProvider).value?.data?.token;
+    if (token == null || token.isEmpty) return;
+
+    final street = _routeInfo!['street'] as String? ?? '';
+    final city = _routeInfo!['city'] as String? ?? '';
+    final postal = _routeInfo!['postal'] as String? ?? '';
+    final nextDate = _routeInfo!['nextDate'] as DateTime?;
+    final user = ref.read(authNotifierProvider).value?.data?.user;
+
+    // Only create if we have at least a city
+    if (city.isEmpty) return;
+
+    try {
+      final success = await ref.read(addressProvider.notifier).addAddress(
+            token: token,
+            addressLine: street,
+            city: city,
+            statess: 'ON',
+            country: 'CA',
+            postalCode: postal,
+            phone: user?.phone ?? '',
+            fullName: user?.name ?? '',
+          );
+
+      if (success) {
+        final addresses = ref.read(addressProvider).addresses;
+        if (addresses.isNotEmpty) {
+          ref
+              .read(selectedDeliveryAddressProvider.notifier)
+              .selectAddress(addresses.first);
+        }
+      }
+    } catch (e) {
+      debugPrint('[Onboarding] Failed to create address: $e');
+    }
+
+    // Set the delivery date provider
+    if (nextDate != null) {
+      ref.read(selectedDeliveryDateProvider.notifier).state = nextDate;
+      saveSelectedDeliveryDate(nextDate);
+    }
+  }
+
   Future<void> _handleBringSupplies(Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('has_seen_onboarding', true);
+    await _createAndSelectAddress();
     ref.read(bottomNavProvider.notifier).state = BottomNavIndex.home;
     await _finishOnboardingAndGoHost();
   }
@@ -117,6 +168,8 @@ class _OnboardingState extends ConsumerState<QuestionOnboardingScreenOne> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('has_seen_onboarding', true);
+
+      await _createAndSelectAddress();
 
       // Fetch the water test product and add it to the cart
       debugPrint('[WaterTest] Fetching water test product...');

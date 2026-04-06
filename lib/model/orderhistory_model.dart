@@ -66,6 +66,8 @@ class Order {
   final double waterTestDiscount;
   final double hst;
   final double total;
+  final String deliveryZone;
+  final String deliveryDay;
   final DateTime createdAt;
   final DateTime updatedAt;
   final int version;
@@ -90,6 +92,8 @@ class Order {
     required this.waterTestDiscount,
     required this.hst,
     required this.total,
+    required this.deliveryZone,
+    required this.deliveryDay,
     required this.createdAt,
     required this.updatedAt,
     required this.version,
@@ -133,6 +137,8 @@ class Order {
       waterTestDiscount: (json['waterTestDiscount'] as num?)?.toDouble() ?? 0,
       hst: (json['hst'] as num?)?.toDouble() ?? 0,
       total: (json['total'] as num?)?.toDouble() ?? 0,
+      deliveryZone: json['deliveryZone']?.toString() ?? '',
+      deliveryDay: json['deliveryDay']?.toString() ?? '',
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
       version: json['__v'] as int? ?? 0,
@@ -159,6 +165,8 @@ class Order {
         'waterTestDiscount': waterTestDiscount,
         'hst': hst,
         'total': total,
+        'deliveryZone': deliveryZone,
+        'deliveryDay': deliveryDay,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
         '__v': version,

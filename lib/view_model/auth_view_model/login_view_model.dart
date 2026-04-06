@@ -105,6 +105,31 @@ class AuthNotifier extends AsyncNotifier<LoginResponse?> {
     state = const AsyncData(null);
   }
 
+  /// Re-fetch user data from backend and update local session
+  Future<void> refreshSession() async {
+    final currentSession = state.value;
+    if (currentSession?.data?.token == null) return;
+    final token = currentSession!.data!.token;
+    try {
+      final repo = ref.read(authRepoProvider);
+      final response = await repo.getUserDetails(token: token);
+      final userData = response['data'];
+      if (userData != null && userData is Map<String, dynamic>) {
+        final freshUser = User.fromJson(userData);
+        final updatedSession = LoginResponse(
+          statusCode: currentSession.statusCode,
+          message: currentSession.message,
+          success: currentSession.success,
+          data: LoginData(user: freshUser, token: token),
+        );
+        await _saveSession(updatedSession);
+        state = AsyncData(updatedSession);
+      }
+    } catch (e) {
+      print('refreshSession failed: $e');
+    }
+  }
+
   /// Update user profile (name & email) via API and refresh local session
   Future<void> updateProfile({
     required String name,

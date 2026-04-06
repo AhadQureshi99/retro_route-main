@@ -25,4 +25,21 @@ class NotificationsNotifier extends StateNotifier<AsyncValue<List<NotificationMo
   void replaceNotifications(List<NotificationModel> notifications) {
     state = AsyncValue.data(notifications);
   }
+
+  Future<bool> deleteNotification(String notificationId, String token) async {
+    try {
+      await ref.read(notificationRepoProvider).deleteNotification(
+            notificationId: notificationId,
+            token: token,
+          );
+      // Remove from local state
+      final current = state.value ?? [];
+      state = AsyncValue.data(
+        current.where((n) => n.id != notificationId).toList(),
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }

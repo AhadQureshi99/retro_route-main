@@ -21,6 +21,7 @@ import 'package:retro_route/view_model/address_view_model/address_view_model.dar
 import 'package:retro_route/view_model/address_view_model/selected_delivery_address_view_model.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/view_model/cart_view_model/cart_view_model.dart';
+import 'package:retro_route/view_model/bottom_nav_view_model.dart';
 import 'package:retro_route/config/delivery_zones.dart';
 import 'package:retro_route/view_model/selected_delivery_date_provider.dart';
 import 'package:intl/intl.dart';
@@ -95,6 +96,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               if (persistedDate != null && mounted) {
                 setState(() => _selectedDeliveryDate = persistedDate);
                 ref.read(selectedDeliveryDateProvider.notifier).state = persistedDate;
+              } else {
+                // No per-address date — fall back to global onboarding date
+                loadSelectedDeliveryDate().then((globalDate) {
+                  if (globalDate != null && mounted) {
+                    setState(() => _selectedDeliveryDate = globalDate);
+                    ref.read(selectedDeliveryDateProvider.notifier).state = globalDate;
+                  }
+                });
+              }
+            });
+          } else {
+            // No address ID — try global onboarding date
+            loadSelectedDeliveryDate().then((globalDate) {
+              if (globalDate != null && mounted) {
+                setState(() => _selectedDeliveryDate = globalDate);
+                ref.read(selectedDeliveryDateProvider.notifier).state = globalDate;
               }
             });
           }
@@ -243,13 +260,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final tax = adjustedSubtotal * 0.13; // HST 13%
     final total = adjustedSubtotal + shipping + tax;
 
-    return Scaffold(
+    return PopScope(
+      canPop: !_isProcessing,
+      child: AbsorbPointer(
+        absorbing: _isProcessing,
+        child: Stack(
+          children: [
+            Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        leading: _isProcessing ? const SizedBox.shrink() : null,
         title: customText(
           text: "Checkout",
           fontSize: 24.sp,
@@ -609,6 +633,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             if (cart.items.isEmpty) return;
 
             setState(() => _isProcessing = true);
+            ref.read(paymentProcessingProvider.notifier).state = true;
 
             try {
               final userToken =
@@ -721,6 +746,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             } finally {
               if (mounted) {
                 setState(() => _isProcessing = false);
+                ref.read(paymentProcessingProvider.notifier).state = false;
               }
             }
           },
@@ -730,6 +756,48 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ],
         ),
       ),
+    ),
+    if (_isProcessing)
+      Positioned.fill(
+          child: Container(
+            color: Colors.black.withOpacity(0.3),
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 24.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: AppColors.primary),
+                    SizedBox(height: 16.h),
+                    Text(
+                      'Processing payment…',
+                      style: GoogleFonts.inter(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Please wait, do not close this screen.',
+                      style: GoogleFonts.inter(
+                        fontSize: 12.sp,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+    ),
     );
   }
 
