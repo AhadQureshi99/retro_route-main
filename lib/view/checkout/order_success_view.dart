@@ -401,6 +401,7 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
                 ],
               ),
             ),
+            ),
 
             // ── "Continue Shopping" button pinned at bottom ──────────
             Padding(
