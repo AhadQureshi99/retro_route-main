@@ -94,8 +94,10 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
 
     final subtotal =
         crate.fold<double>(0, (s, c) => s + c.lineTotal);
-    // Only apply $39 credit if customer paid full price for water test
-    final waterTestCredit = (delivery.waterTestDiscount ?? 0) > 0 ? 0.0 : 39.0;
+    // Only apply credit if customer paid full price for water test
+    // Credit includes the $39 fee + HST charged on it
+    final waterTestFee = 39.0;
+    final waterTestCredit = (delivery.waterTestDiscount ?? 0) > 0 ? 0.0 : double.parse((waterTestFee + waterTestFee * 0.13).toStringAsFixed(2));
     final afterCredit = (subtotal - waterTestCredit).clamp(0.0, double.infinity);
     final hst = afterCredit * 0.13;
     final total = afterCredit + hst;
@@ -372,7 +374,7 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
                   _priceRow(
                       'Subtotal', '\$${subtotal.toStringAsFixed(2)}', false),
                   if (waterTestCredit > 0)
-                    _priceRow('Water test credit', '− \$${waterTestCredit.toStringAsFixed(2)}', false,
+                    _priceRow('Water test credit (incl. HST)', '− \$${waterTestCredit.toStringAsFixed(2)}', false,
                         valueColor: DriverColors.green),
                   _priceRow('HST (13%)', '\$${hst.toStringAsFixed(2)}', false),
                   Divider(height: 20.h, color: DriverColors.bg),

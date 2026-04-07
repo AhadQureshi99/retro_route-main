@@ -313,8 +313,8 @@ class DriverDeliveriesNotifier extends Notifier<DriverDeliveriesState> {
         driverLon: driverLon,
       );
 
-      // Refresh data after update
-      await fetchAllData(token);
+      // Refresh data in background — don't block the caller
+      fetchAllData(token);
       return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());
@@ -340,8 +340,8 @@ class DriverDeliveriesNotifier extends Notifier<DriverDeliveriesState> {
         deliveryProofImage: deliveryProofImage,
       );
 
-      // Refresh data after update
-      await fetchAllData(token);
+      // Refresh data in background — don't block the caller
+      fetchAllData(token);
       return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());

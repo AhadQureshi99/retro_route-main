@@ -237,7 +237,7 @@ class OrderDetailsScreen extends StatelessWidget {
                   _buildPriceRow("Crate Subtotal", (order.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0),
                   if ((order.pendingCrate!['credit'] as num?)?.toDouble() != null &&
                       (order.pendingCrate!['credit'] as num).toDouble() > 0)
-                    _buildPriceRow("Water Test Credit", -(order.pendingCrate!['credit'] as num).toDouble()),
+                    _buildPriceRow("Water Test Credit (incl. HST)", -(order.pendingCrate!['credit'] as num).toDouble()),
                   _buildPriceRow("HST (13%)", (order.pendingCrate!['hst'] as num?)?.toDouble() ?? 0),
                   Divider(height: 16.h),
                   _buildPriceRow("Crate Total", (order.pendingCrate!['total'] as num?)?.toDouble() ?? 0, isBold: true),

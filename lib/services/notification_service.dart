@@ -138,7 +138,11 @@ class NotificationServices {
     final orderId = data['orderId'] as String?;
 
     final ctx = rootNavigatorKey.currentContext;
-    if (ctx == null) return;
+    if (ctx == null) {
+      // Context not ready yet (app still resuming) — store for later.
+      pendingNotificationData = data;
+      return;
+    }
 
     if (screen != null) {
       switch (screen) {
@@ -153,13 +157,13 @@ class NotificationServices {
             return;
           }
         case 'OrderHistory':
-          GoRouter.of(ctx).push(AppRoutes.orderHistory);
+          GoRouter.of(ctx).go(AppRoutes.orderHistory);
           return;
         case 'DriverDeliveries':
-          GoRouter.of(ctx).push(AppRoutes.driverHome);
+          GoRouter.of(ctx).go(AppRoutes.driverHome);
           return;
         case 'DriverOrderDetail':
-          GoRouter.of(ctx).push(AppRoutes.driverHome);
+          GoRouter.of(ctx).go(AppRoutes.driverHome);
           return;
       }
     }

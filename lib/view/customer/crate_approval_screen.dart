@@ -541,7 +541,7 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
                                   _priceRow('Products ($_enabledCount items)', '\$${_subtotal.toStringAsFixed(2)}'),
                                   if (_crateCredit > 0)
                                     _priceRow(
-                                      'Water Test Credit',
+                                      'Water Test Credit (incl. HST)',
                                       '-\$${_crateCredit.toStringAsFixed(2)}',
                                       valueColor: const Color(0xFF2E7D32),
                                     ),

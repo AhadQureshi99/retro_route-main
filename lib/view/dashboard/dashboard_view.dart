@@ -54,6 +54,11 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   // Single guard flag – prevents stacking multiple no-internet dialogs
   bool _noInternetDialogShown = false;
 
+  /// True while we're deciding whether to redirect to the milk-run screen.
+  /// While true the dashboard shows a plain splash so the user never sees
+  /// a flash of loading shimmers before the redirect.
+  bool _checkingMilkRun = false;
+
   @override
   void initState() {
     super.initState();
@@ -63,7 +68,16 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
       });
     });
 
+    // Pre-check synchronous conditions so we can show a blank screen
+    // immediately instead of flashing the dashboard.
+    if (!NotificationServices.instance.openedFromNotification &&
+        !_milkRunPopupShownThisSession &&
+        !HomeDashboardScreen.suppressMilkRunForSession) {
+      _checkingMilkRun = true;
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _consumePendingNotificationIfAny();
       _fetchNotifications();
       _tryShowWaterTestPopup();
     });
@@ -76,26 +90,70 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     }
   }
 
+  /// If a notification tap was stored because the context wasn't ready,
+  /// consume it now that the dashboard is mounted.
+  void _consumePendingNotificationIfAny() {
+    final data = NotificationServices.instance.pendingNotificationData;
+    if (data == null) return;
+    NotificationServices.instance.pendingNotificationData = null;
+    NotificationServices.instance.openedFromNotification = false;
+
+    final screen = data['screen'] as String?;
+    final orderId = data['orderId'] as String?;
+
+    if (screen != null) {
+      switch (screen) {
+        case 'CrateApproval':
+          if (orderId != null) {
+            GoRouter.of(context).push('${AppRoutes.crateApproval}?orderId=$orderId');
+            return;
+          }
+        case 'PoolReport':
+          if (orderId != null) {
+            GoRouter.of(context).push('${AppRoutes.poolReport}?orderId=$orderId');
+            return;
+          }
+        case 'OrderHistory':
+          GoRouter.of(context).go(AppRoutes.orderHistory);
+          return;
+        case 'DriverDeliveries':
+        case 'DriverOrderDetail':
+          GoRouter.of(context).go(AppRoutes.driverHome);
+          return;
+      }
+    }
+
+    GoRouter.of(context).go(AppRoutes.notifications);
+  }
+
   Future<void> _tryShowWaterTestPopup() async {
     // Don't show if the app was opened via a notification tap
     if (NotificationServices.instance.openedFromNotification) {
       NotificationServices.instance.openedFromNotification = false;
+      if (mounted) setState(() => _checkingMilkRun = false);
       return;
     }
 
     // Only show once per app session
-    if (_milkRunPopupShownThisSession) return;
+    if (_milkRunPopupShownThisSession) {
+      if (mounted) setState(() => _checkingMilkRun = false);
+      return;
+    }
 
     // Don't show right after login/register — only on subsequent app opens
-    if (HomeDashboardScreen.suppressMilkRunForSession) return;
+    if (HomeDashboardScreen.suppressMilkRunForSession) {
+      if (mounted) setState(() => _checkingMilkRun = false);
+      return;
+    }
 
-    // Wait a short moment to let the screen settle
-    await Future.delayed(const Duration(milliseconds: 500));
     if (!mounted) return;
 
     // Only show for authenticated users (matches web: if (!isAuthenticated) return null)
     final token = ref.read(authNotifierProvider).value?.data?.token;
-    if (token == null) return;
+    if (token == null) {
+      if (mounted) setState(() => _checkingMilkRun = false);
+      return;
+    }
 
     // Force refresh the water test data each app launch
     ref.invalidate(waterTestProvider);
@@ -107,6 +165,8 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     if (product != null) {
       _milkRunPopupShownThisSession = true;
       goRouter.go('${AppRoutes.onboarding}?screen=3');
+    } else {
+      if (mounted) setState(() => _checkingMilkRun = false);
     }
   }
 
@@ -347,6 +407,20 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // While deciding whether to redirect to the milk-run onboarding,
+    // show a plain splash so the user never sees loading shimmers.
+    if (_checkingMilkRun) {
+      return Scaffold(
+        backgroundColor: AppColors.bgColor,
+        body: Center(
+          child: Image.asset(
+            AppImages.logos,
+            width: 120.w,
+          ),
+        ),
+      );
+    }
+
     final categoriesAsync = ref.watch(categoriesProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
     final selectedSubcategory = ref.watch(selectedSubcategoryProvider);

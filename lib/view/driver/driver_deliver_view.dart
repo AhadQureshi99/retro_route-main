@@ -66,43 +66,51 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
 
     setState(() => _uploading = true);
 
-    final token = ref.read(authNotifierProvider).value?.data?.token ?? '';
-    bool ok;
+    try {
+      final token = ref.read(authNotifierProvider).value?.data?.token ?? '';
+      bool ok;
 
-    if (_proofImage != null) {
-      ok = await ref
-          .read(driverDeliveriesProvider.notifier)
-          .updateDeliveryStatusWithProof(
-            token: token,
-            orderId: widget.delivery.id ?? '',
-            status: 'Delivered',
-            driverNotes: _notes.text,
-            deliveryProofImage: _proofImage!,
-          );
-    } else {
-      ok = await ref
-          .read(driverDeliveriesProvider.notifier)
-          .updateDeliveryStatus(
-            token: token,
-            orderId: widget.delivery.id ?? '',
-            status: 'Delivered',
-            driverNotes: _notes.text,
-          );
-    }
+      if (_proofImage != null) {
+        ok = await ref
+            .read(driverDeliveriesProvider.notifier)
+            .updateDeliveryStatusWithProof(
+              token: token,
+              orderId: widget.delivery.id ?? '',
+              status: 'Delivered',
+              driverNotes: _notes.text,
+              deliveryProofImage: _proofImage!,
+            );
+      } else {
+        ok = await ref
+            .read(driverDeliveriesProvider.notifier)
+            .updateDeliveryStatus(
+              token: token,
+              orderId: widget.delivery.id ?? '',
+              status: 'Delivered',
+              driverNotes: _notes.text,
+            );
+      }
 
-    setState(() => _uploading = false);
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (ok) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('✅ Delivery confirmed! Moving to next stop.'),
-          backgroundColor: Color(0xFF2E7D32)));
-      context.go(AppRoutes.driverHome);
-    } else {
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('✅ Delivery confirmed! Moving to next stop.'),
+            backgroundColor: Color(0xFF2E7D32)));
+        context.go(AppRoutes.driverHome);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                ref.read(driverDeliveriesProvider).error ?? 'Delivery failed'),
+            backgroundColor: DriverColors.red));
+      }
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-              ref.read(driverDeliveriesProvider).error ?? 'Delivery failed'),
+          content: Text('Delivery failed: $e'),
           backgroundColor: DriverColors.red));
+    } finally {
+      if (mounted) setState(() => _uploading = false);
     }
   }
 
@@ -115,17 +123,11 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
   // Use the delivery model's approved data (updated by backend after crate approval)
   late final List<Map<String, dynamic>> _approvedItems = widget.delivery.crateApprovedItems;
   late final double _total = widget.delivery.safeCrateTotal;
-  late final DriverDelivery? _nextOrder = () {
-    final activeOrders = ref.read(driverDeliveriesProvider).filteredActiveDeliveries;
-    final idx = activeOrders.indexWhere((o) => o.id == widget.delivery.id);
-    return idx >= 0 && idx < activeOrders.length - 1 ? activeOrders[idx + 1] : null;
-  }();
 
   @override
   Widget build(BuildContext context) {
     final total = _total;
     final approvedItems = _approvedItems;
-    final nextOrder = _nextOrder;
 
     return Scaffold(
       backgroundColor: DriverColors.bg,
@@ -139,19 +141,6 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
               Padding(
                 padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 0),
                 child: Row(children: [
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Container(
-                      width: 36.w,
-                      height: 36.w,
-                      decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          shape: BoxShape.circle),
-                      child: Icon(Icons.arrow_back,
-                          color: Colors.white, size: 18.sp),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,43 +418,9 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
                 ],
               ),
 
-              // Next stop preview
-              if (nextOrder != null)
-                Container(
-                  padding: EdgeInsets.all(12.w),
-                  margin: EdgeInsets.only(bottom: 10.h),
-                  decoration: BoxDecoration(
-                      color: DriverColors.navy,
-                      borderRadius: BorderRadius.circular(12.r)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('NEXT STOP',
-                          style: GoogleFonts.inter(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w700,
-                              color: DriverColors.orange,
-                              letterSpacing: 0.5)),
-                      SizedBox(height: 4.h),
-                      Text(nextOrder.safeCustomerName,
-                          style: GoogleFonts.inter(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white)),
-                      Text(
-                          nextOrder.deliveryAddress?.fullAddress ??
-                              'No address',
-                          style: GoogleFonts.inter(
-                              fontSize: 11.sp,
-                              color: Colors.white54,
-                              fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-
               SizedBox(height: 10.h),
               DriverGreenButton(
-                text: 'Confirm delivery — next stop →',
+                text: 'Confirm delivery →',
                 onPressed: _confirm,
                 loading: _uploading,
               ),

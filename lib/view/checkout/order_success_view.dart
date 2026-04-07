@@ -73,15 +73,21 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
     return DateFormat('EEEE, MMMM d, yyyy').format(date);
   }
 
+  /// Returns true if a string looks like a raw MongoDB ObjectId (24 hex chars).
+  bool _isMongoId(String s) => RegExp(r'^[a-f0-9]{24}$').hasMatch(s);
+
   @override
   Widget build(BuildContext context) {
+    final addressOk = widget.deliveryAddress != null &&
+        widget.deliveryAddress!.trim().isNotEmpty &&
+        !_isMongoId(widget.deliveryAddress!.trim());
     final hasDeliveryInfo =
-        widget.deliveryDate != null || (widget.deliveryZone != null && widget.deliveryZone!.isNotEmpty) || (widget.deliveryAddress != null && widget.deliveryAddress!.trim().isNotEmpty);
+        widget.deliveryDate != null || (widget.deliveryZone != null && widget.deliveryZone!.isNotEmpty) || addressOk;
 
     return Scaffold(
       backgroundColor: AppColors.bgColor,
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
             // Confetti at the top
             Align(
@@ -106,9 +112,9 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
               ),
             ),
 
-            Center(
+            Expanded(
               child: SingleChildScrollView(
-              padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 32.h, bottom: 100.h),
+              padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 20.h, bottom: 16.h),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -116,46 +122,44 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
 
                   // ── Check icon ─────────────────────────────────────
                   Container(
-                    width: 100.w,
-                    height: 100.w,
+                    width: 64.w,
+                    height: 64.w,
                     decoration:  BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.btnColor.withOpacity(0.1), // green-100
+                      color: AppColors.btnColor.withOpacity(0.1),
                     ),
                     child: Icon(
                       Icons.check_circle_rounded,
-                      size: 60.sp,
-                      color: AppColors.btnColor, // green-600
+                      size: 40.sp,
+                      color: AppColors.btnColor,
                     ),
                   ),
 
-                  verticalSpacer(height: 20.h),
+                  verticalSpacer(height: 12.h),
 
                   // ── Title ──────────────────────────────────────────
                   customText(
                     text: "Order Placed Successfully! 🎉",
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
                     textAlign: TextAlign.center,
                   ),
 
-                  verticalSpacer(height: 10),
+                  verticalSpacer(height: 6),
 
                   // ── Subtitle ───────────────────────────────────────
                   customText(
                     text:
                         "Thank you for your purchase. We've sent a confirmation email with your order details.",
-                    fontSize: 14,
+                    fontSize: 13,
                     color: Colors.grey[800]!,
                     fontWeight: FontWeight.w400,
                     textAlign: TextAlign.center,
                     maxLine: 3,
                   ),
 
-               
-
-                  verticalSpacer(height: 20),
+                  verticalSpacer(height: 14),
 
                   // ── Order Number card ──────────────────────────────────
                   if (widget.displayOrderNumber.isNotEmpty)
@@ -336,8 +340,7 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
                               ],
                             ),
                           ],
-                          if (widget.deliveryAddress != null &&
-                              widget.deliveryAddress!.trim().isNotEmpty) ...[
+                          if (addressOk) ...[
                             verticalSpacer(height: 10),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,10 +380,10 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
 
                   // ── Total Paid ─────────────────────────────────────
                   if (widget.total != null) ...[
-                    verticalSpacer(height: 14.h),
+                    verticalSpacer(height: 10.h),
                     customText(
                       text: "Total Paid",
-                      fontSize: 24,
+                      fontSize: 20,
                       color: Colors.black,
                       fontWeight: FontWeight.w500,
                     ),
@@ -388,38 +391,37 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
                     customText(
                       text:
                           "\$${widget.total!.toStringAsFixed(2)} CAD",
-                      fontSize: 24,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                     ),
                   ],
 
-                  verticalSpacer(height: 32),
-
-
-                  // ── "Continue Shopping" button (outlined) ──────────
-                  customButton(
-                    context: context,
-                    text: "Continue Shopping",
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    fontColor: AppColors.white,
-                    bgColor: AppColors.btnColor,
-                    borderRadius: 30.r,
-                    height: 54,
-                    width: double.infinity,
-                    onPressed: () {
-                      ref.read(bottomNavProvider.notifier).state = BottomNavIndex.home;
-                      goRouter.go(AppRoutes.host);
-                    },
-                    borderColor: AppColors.btnColor,
-                    isCircular: false,
-                  ),
-
-                  verticalSpacer(height: 32.h),
+                  verticalSpacer(height: 16.h),
                 ],
               ),
             ),
+
+            // ── "Continue Shopping" button pinned at bottom ──────────
+            Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 16.h),
+              child: customButton(
+                context: context,
+                text: "Continue Shopping",
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                fontColor: AppColors.white,
+                bgColor: AppColors.btnColor,
+                borderRadius: 30.r,
+                height: 54,
+                width: double.infinity,
+                onPressed: () {
+                  ref.read(bottomNavProvider.notifier).state = BottomNavIndex.home;
+                  goRouter.go(AppRoutes.host);
+                },
+                borderColor: AppColors.btnColor,
+                isCircular: false,
+              ),
             ),
           ],
         ),

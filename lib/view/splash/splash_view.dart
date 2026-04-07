@@ -156,16 +156,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
               return;
             }
           case 'OrderHistory':
-            GoRouter.of(ctx).push(AppRoutes.orderHistory);
+            GoRouter.of(ctx).go(AppRoutes.orderHistory);
             return;
           case 'DriverDeliveries':
           case 'DriverOrderDetail':
-            GoRouter.of(ctx).push(AppRoutes.driverHome);
+            GoRouter.of(ctx).go(AppRoutes.driverHome);
             return;
         }
       }
 
-      GoRouter.of(ctx).push(AppRoutes.notifications);
+      GoRouter.of(ctx).go(AppRoutes.notifications);
     });
   }
 
