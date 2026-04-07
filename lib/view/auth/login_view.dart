@@ -6,14 +6,18 @@ import 'package:retro_route/components/custom_spacer.dart';
 import 'package:retro_route/components/custom_text.dart';
 import 'package:retro_route/components/custom_textfield.dart';
 import 'package:retro_route/model/login_model.dart';
+import 'package:retro_route/config/delivery_zones.dart';
 import 'package:retro_route/repository/onboarding_repo.dart';
 import 'package:retro_route/repository/setup_profile_repo.dart';
 import 'package:retro_route/utils/app_assets.dart';
 import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
 import 'package:retro_route/utils/app_toast.dart';
+import 'package:retro_route/view_model/address_view_model/address_view_model.dart';
+import 'package:retro_route/view_model/address_view_model/selected_delivery_address_view_model.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/view_model/bottom_nav_view_model.dart';
+import 'package:retro_route/view_model/selected_delivery_date_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -73,6 +77,58 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  /// Creates a server-side address from guest onboarding data if present.
+  Future<void> _restoreGuestAddressIfNeeded(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final street = prefs.getString('guest_street') ?? '';
+      final city = prefs.getString('guest_city') ?? '';
+      final postal = prefs.getString('guest_postal') ?? '';
+
+      if (city.isEmpty && street.isEmpty) return;
+      if (token.isEmpty) return;
+
+      final user = ref.read(authNotifierProvider).value?.data?.user;
+
+      final success = await ref.read(addressProvider.notifier).addAddress(
+        token: token,
+        addressLine: street,
+        city: city,
+        statess: 'ON',
+        country: 'CA',
+        postalCode: postal,
+        phone: user?.phone ?? '',
+        fullName: user?.name ?? '',
+      );
+
+      if (success) {
+        final addresses = ref.read(addressProvider).addresses;
+        if (addresses.isNotEmpty) {
+          ref.read(selectedDeliveryAddressProvider.notifier)
+              .selectAddress(addresses.first);
+        }
+
+        final savedDate = await loadSelectedDeliveryDate();
+        if (savedDate != null) {
+          ref.read(selectedDeliveryDateProvider.notifier).state = savedDate;
+        } else {
+          final zone = detectZoneByCity(city);
+          if (zone != null) {
+            final nextDate = getNextDeliveryDateFromDays(zone.deliveryDays);
+            ref.read(selectedDeliveryDateProvider.notifier).state = nextDate;
+            saveSelectedDeliveryDate(nextDate);
+          }
+        }
+      }
+
+      await prefs.remove('guest_street');
+      await prefs.remove('guest_city');
+      await prefs.remove('guest_postal');
+    } catch (e) {
+      debugPrint('[Login] Failed to restore guest address: $e');
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -117,6 +173,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             } else {
               _saveCredentials(_rememberMe);
               CustomToast.success(msg: 'Logged in successfully!');
+              await _restoreGuestAddressIfNeeded(token);
               final lastTab = await loadPersistedBottomNavIndex();
               ref.read(bottomNavProvider.notifier).state = lastTab;
               goRouter.go(AppRoutes.host);

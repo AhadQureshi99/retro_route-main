@@ -68,6 +68,7 @@ class Order {
   final double total;
   final String deliveryZone;
   final String deliveryDay;
+  final Map<String, dynamic>? pendingCrate;
   final DateTime createdAt;
   final DateTime updatedAt;
   final int version;
@@ -94,6 +95,7 @@ class Order {
     required this.total,
     required this.deliveryZone,
     required this.deliveryDay,
+    this.pendingCrate,
     required this.createdAt,
     required this.updatedAt,
     required this.version,
@@ -139,6 +141,9 @@ class Order {
       total: (json['total'] as num?)?.toDouble() ?? 0,
       deliveryZone: json['deliveryZone']?.toString() ?? '',
       deliveryDay: json['deliveryDay']?.toString() ?? '',
+      pendingCrate: json['pendingCrate'] is Map<String, dynamic>
+          ? json['pendingCrate'] as Map<String, dynamic>
+          : null,
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
       version: json['__v'] as int? ?? 0,
@@ -167,6 +172,7 @@ class Order {
         'total': total,
         'deliveryZone': deliveryZone,
         'deliveryDay': deliveryDay,
+        'pendingCrate': pendingCrate,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
         '__v': version,

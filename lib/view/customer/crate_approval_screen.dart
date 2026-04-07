@@ -24,6 +24,7 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
   Set<int> _enabled = {}; // indices of toggled-on items
   bool _loaded = false;
   bool _approving = false;
+  double _crateCredit = 0.0; // $39 credit from backend (0 if water test was already free)
 
   @override
   void initState() {
@@ -41,9 +42,11 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
     if (data != null) {
       final crate = data['pendingCrate'] as Map<String, dynamic>?;
       final rawItems = crate?['items'] as List<dynamic>? ?? [];
+      final credit = (crate?['credit'] as num?)?.toDouble() ?? 0.0;
       setState(() {
         _items = rawItems.map((e) => Map<String, dynamic>.from(e as Map)).toList();
         _enabled = Set<int>.from(List.generate(_items.length, (i) => i));
+        _crateCredit = credit;
         _loaded = true;
       });
     }
@@ -70,10 +73,10 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
       .where((e) => _enabled.contains(e.key))
       .fold<int>(0, (s, e) => s + ((e.value['qty'] as num?)?.toInt() ?? 1));
 
-  double get _waterTestFee => _subtotal > 0 ? 0.0 : 39.0;
-  double get _beforeTax => _subtotal + _waterTestFee;
-  double get _hst => _beforeTax * 0.13;
-  double get _total => _beforeTax + _hst;
+  double get _waterTestFee => 0.0; // Water test fee is never added on crate screen
+  double get _afterCredit => (_crateCredit > 0) ? (_subtotal - _crateCredit).clamp(0, double.infinity) : _subtotal;
+  double get _hst => _afterCredit * 0.13;
+  double get _total => _afterCredit + _hst;
 
   Future<void> _approve() async {
     if (_approving) return;
@@ -536,11 +539,12 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
                               child: Column(
                                 children: [
                                   _priceRow('Products ($_enabledCount items)', '\$${_subtotal.toStringAsFixed(2)}'),
-                                  _priceRow(
-                                    _subtotal > 0 ? 'Water Test ✓ FREE' : 'Water Test Fee',
-                                    _subtotal > 0 ? '\$0.00' : '\$${_waterTestFee.toStringAsFixed(2)}',
-                                    valueColor: _subtotal > 0 ? const Color(0xFF2E7D32) : null,
-                                  ),
+                                  if (_crateCredit > 0)
+                                    _priceRow(
+                                      'Water Test Credit',
+                                      '-\$${_crateCredit.toStringAsFixed(2)}',
+                                      valueColor: const Color(0xFF2E7D32),
+                                    ),
                                   _priceRow('HST (13%)', '\$${_hst.toStringAsFixed(2)}'),
                                   Padding(
                                     padding: EdgeInsets.symmetric(vertical: 8.h),

@@ -27,9 +27,14 @@ import 'package:retro_route/view/dashboard/widgets/water_test_popup.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/view_model/notification_view_model/notification_view_model.dart';
 import 'package:retro_route/view_model/water_test_view_model/water_test_view_model.dart';
+import 'package:retro_route/view/splash/q_onboarding_view.dart';
 
 class HomeDashboardScreen extends ConsumerStatefulWidget {
   const HomeDashboardScreen({super.key});
+
+  /// Set to true from login/register flows so the milk-run screen
+  /// is suppressed until the next cold app start.
+  static bool suppressMilkRunForSession = false;
 
   @override
   ConsumerState<HomeDashboardScreen> createState() =>
@@ -81,6 +86,9 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     // Only show once per app session
     if (_milkRunPopupShownThisSession) return;
 
+    // Don't show right after login/register — only on subsequent app opens
+    if (HomeDashboardScreen.suppressMilkRunForSession) return;
+
     // Wait a short moment to let the screen settle
     await Future.delayed(const Duration(milliseconds: 500));
     if (!mounted) return;
@@ -98,7 +106,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
 
     if (product != null) {
       _milkRunPopupShownThisSession = true;
-      WaterTestPopup.show(context, ref);
+      goRouter.go('${AppRoutes.onboarding}?screen=3');
     }
   }
 
@@ -382,7 +390,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
         leading: GestureDetector(
           onTap: () {
             ref.read(cartProvider.notifier).clear();
-            goRouter.go('${AppRoutes.onboarding}?screen=4');
+            goRouter.go('${AppRoutes.onboarding}?screen=3');
           },
           child: Container(
             margin: EdgeInsets.only(left: 10.w, top: 8.h, bottom: 8.h),

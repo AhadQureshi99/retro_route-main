@@ -15,6 +15,7 @@ class OrderDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat("dd MMM yyyy • hh:mm a");
+    final dateOnlyFormat = DateFormat("dd MMM yyyy");
 
     return Scaffold(
       backgroundColor: AppColors.bgColor,
@@ -39,14 +40,14 @@ class OrderDetailsScreen extends StatelessWidget {
                     color: _getStatusColor(order.deliveryStatus)),
                 _buildRow("Payment", order.paymentStatus,
                     color: order.paymentStatus == "Paid" ? Colors.green : Colors.orange),
-                _buildRow("Total Amount", "\$${order.total.toStringAsFixed(2)}",
+                _buildRow("Total Amount", "\$${_combinedTotal(order).toStringAsFixed(2)}",
                     isBold: true),
                 if (order.deliveryZone.isNotEmpty)
                   _buildRow("Zone", order.deliveryZone),
                 if (order.deliveryDay.isNotEmpty)
                   _buildRow("Delivery Day", order.deliveryDay),
                 if (order.scheduledDeliveryDate != null)
-                  _buildRow("Delivery Date", dateFormat.format(order.scheduledDeliveryDate!.toLocal())),
+                  _buildRow("Delivery Date", dateOnlyFormat.format(order.scheduledDeliveryDate!.toLocal())),
               ],
             ),
 
@@ -111,7 +112,7 @@ class OrderDetailsScreen extends StatelessWidget {
                             ),
                             verticalSpacer(height: 4.h),
                             customText(
-                              text: "Qty: ${p.quantity} • \$${p.priceAtPurchase.toStringAsFixed(2)}",
+                              text: "Qty: ${p.quantity} • \$${(p.priceAtPurchase > 0 ? p.priceAtPurchase : prod.price).toStringAsFixed(2)}",
                               fontSize: 13,
                               color: Colors.black, fontWeight: FontWeight.w400,
                             ),
@@ -126,17 +127,144 @@ class OrderDetailsScreen extends StatelessWidget {
 
             verticalSpacer(height: 16),
 
+            // Water Test Crate Items (if any)
+            if (order.pendingCrate != null &&
+                (order.pendingCrate!['items'] as List?)?.isNotEmpty == true &&
+                ['approved', 'paid', 'delivered'].contains(order.pendingCrate!['status'])) ...[
+              _buildInfoCard(
+                title: "Water Test Crate (${(order.pendingCrate!['items'] as List).length})",
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                    margin: EdgeInsets.only(bottom: 12.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2E7D32).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.science_outlined, size: 16.w, color: const Color(0xFF2E7D32)),
+                        horizontalSpacer(width: 6.w),
+                        customText(
+                          text: "Recommended from water test",
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF2E7D32),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ...(order.pendingCrate!['items'] as List).map((item) {
+                    final name = item['name']?.toString() ?? 'Product';
+                    final qty = (item['qty'] as num?)?.toInt() ?? 1;
+                    final price = (item['price'] as num?)?.toDouble() ?? 0;
+                    final reason = item['reason']?.toString() ?? '';
+                    final size = item['size']?.toString() ?? '';
+                    final image = item['image']?.toString() ?? '';
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: 12.h),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12.r),
+                            child: image.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: image,
+                                    width: 70.w,
+                                    height: 70.w,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(color: Colors.grey[200]),
+                                    errorWidget: (context, url, error) =>
+                                        Icon(Icons.science, color: Colors.grey[400], size: 28.w),
+                                  )
+                                : Container(
+                                    width: 70.w,
+                                    height: 70.w,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                    child: Icon(Icons.science, color: Colors.grey[400], size: 28.w),
+                                  ),
+                          ),
+                          horizontalSpacer(width: 12.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                customText(
+                                  text: name,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  maxLine: 2,
+                                  color: AppColors.black,
+                                ),
+                                if (size.isNotEmpty) ...[
+                                  verticalSpacer(height: 2.h),
+                                  customText(
+                                    text: "Size: $size",
+                                    fontSize: 12,
+                                    color: Colors.grey[600]!,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ],
+                                verticalSpacer(height: 4.h),
+                                customText(
+                                  text: "Qty: $qty • \$${price.toStringAsFixed(2)}",
+                                  fontSize: 13,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                if (reason.isNotEmpty) ...[
+                                  verticalSpacer(height: 2.h),
+                                  customText(
+                                    text: reason,
+                                    fontSize: 11,
+                                    color: Colors.grey[500]!,
+                                    fontWeight: FontWeight.w400,
+                                    maxLine: 2,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  // Crate price breakdown
+                  Divider(height: 16.h),
+                  _buildPriceRow("Crate Subtotal", (order.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0),
+                  if ((order.pendingCrate!['credit'] as num?)?.toDouble() != null &&
+                      (order.pendingCrate!['credit'] as num).toDouble() > 0)
+                    _buildPriceRow("Water Test Credit", -(order.pendingCrate!['credit'] as num).toDouble()),
+                  _buildPriceRow("HST (13%)", (order.pendingCrate!['hst'] as num?)?.toDouble() ?? 0),
+                  Divider(height: 16.h),
+                  _buildPriceRow("Crate Total", (order.pendingCrate!['total'] as num?)?.toDouble() ?? 0, isBold: true),
+                ],
+              ),
+              verticalSpacer(height: 16),
+            ],
+
             // Price Breakdown
             _buildInfoCard(
               title: "Price Breakdown",
               children: [
                 _buildPriceRow("Subtotal", order.subtotal),
-                if (order.waterTestDiscount > 0)
-                  _buildPriceRow("Water Test Discount", -order.waterTestDiscount),
-                _buildPriceRow("Delivery Charges", order.deliveryCharges),
-                _buildPriceRow("HST (13%)", order.hst),
+                if (order.waterTestDiscount > 0) ...[                  
+                  _buildColoredPriceRow("Water Test Discount", -order.waterTestDiscount, const Color(0xFFE65100)),
+                  _buildPriceRow("After Discount", (order.subtotal - order.waterTestDiscount).clamp(0, double.infinity), isBold: true),
+                ],
+                if (order.deliveryCharges > 0)
+                  _buildPriceRow("Delivery Charges", order.deliveryCharges),
+                _buildPriceRow("Tax (HST 13%)", order.hst),
                 Divider(height: 24.h),
                 _buildPriceRow("Total", order.total, isBold: true),
+                if (_crateTotal(order) > 0) ...[                  
+                  _buildPriceRow("Crate Total", _crateTotal(order), isBold: true),
+                  Divider(height: 24.h),
+                  _buildPriceRow("Combined Total", _combinedTotal(order), isBold: true),
+                ],
               ],
             ),
 
@@ -233,6 +361,29 @@ class OrderDetailsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildColoredPriceRow(String label, double amount, Color labelColor) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          customText(
+            text: label,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: labelColor,
+          ),
+          customText(
+            text: "\$${amount.toStringAsFixed(2)}",
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: labelColor,
+          ),
+        ],
+      ),
+    );
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'delivered':
@@ -249,4 +400,14 @@ class OrderDetailsScreen extends StatelessWidget {
         return Colors.grey;
     }
   }
+
+  double _crateTotal(Order order) {
+    final crate = order.pendingCrate;
+    if (crate == null) return 0;
+    final status = crate['status']?.toString() ?? '';
+    if (!['approved', 'paid', 'delivered'].contains(status)) return 0;
+    return (crate['total'] as num?)?.toDouble() ?? 0;
+  }
+
+  double _combinedTotal(Order order) => order.total + _crateTotal(order);
 }

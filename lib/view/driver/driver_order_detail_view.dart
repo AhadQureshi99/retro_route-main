@@ -105,7 +105,8 @@ class _DriverOrderDetailScreenState
         goRouter.pop();
       }
     } else {
-      CustomToast.error(msg: 'Failed to update status');
+      final errorMsg = ref.read(driverDeliveriesProvider).error ?? 'Failed to update status';
+      CustomToast.error(msg: errorMsg.contains('active delivery') ? errorMsg : 'Failed to update status');
     }
   }
 

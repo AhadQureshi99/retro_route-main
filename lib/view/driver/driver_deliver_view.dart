@@ -114,7 +114,7 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
 
   // Use the delivery model's approved data (updated by backend after crate approval)
   late final List<Map<String, dynamic>> _approvedItems = widget.delivery.crateApprovedItems;
-  late final double _total = widget.delivery.safeTotal;
+  late final double _total = widget.delivery.safeCrateTotal;
   late final DriverDelivery? _nextOrder = () {
     final activeOrders = ref.read(driverDeliveriesProvider).filteredActiveDeliveries;
     final idx = activeOrders.indexWhere((o) => o.id == widget.delivery.id);

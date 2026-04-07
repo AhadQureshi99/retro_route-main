@@ -1449,6 +1449,9 @@ class _FindMilkRunContentState extends State<FindMilkRunContent> {
         widget.onSelectRoute({
           'zone': zone,
           'address': '${_streetCtrl.text.trim()}, $city ${_postalCtrl.text.trim()}',
+          'street': _streetCtrl.text.trim(),
+          'city': city,
+          'postal': _postalCtrl.text.trim(),
           'nextDate': getNextDeliveryDateFromDays(zone.deliveryDays),
         });
       }
@@ -1492,6 +1495,9 @@ class _FindMilkRunContentState extends State<FindMilkRunContent> {
       widget.onSelectRoute({
         'zone': z,
         'address': '${_streetCtrl.text.trim()}, $city ${_postalCtrl.text.trim()}',
+        'street': _streetCtrl.text.trim(),
+        'city': city,
+        'postal': _postalCtrl.text.trim(),
         'nextDate': getNextDeliveryDateFromDays(z.deliveryDays),
       });
     }
@@ -1539,6 +1545,9 @@ class _FindMilkRunContentState extends State<FindMilkRunContent> {
         widget.onSelectRoute({
           'zone': z,
           'address': '${_streetCtrl.text.trim()}, $city ${_postalCtrl.text.trim()}',
+          'street': _streetCtrl.text.trim(),
+          'city': city,
+          'postal': _postalCtrl.text.trim(),
           'nextDate': getNextDeliveryDateFromDays(z.deliveryDays),
         });
       }

@@ -107,6 +107,18 @@ class _OnboardingState extends ConsumerState<QuestionOnboardingScreenOne> {
       await prefs.setString('milkrun_full_address', address);
       await prefs.setString('milkrun_address', address);
     }
+    // Save individual address fields for guest session restoration after signup
+    final street = data['street'] as String? ?? '';
+    final city = data['city'] as String? ?? '';
+    final postal = data['postal'] as String? ?? '';
+    if (street.isNotEmpty) await prefs.setString('guest_street', street);
+    if (city.isNotEmpty) await prefs.setString('guest_city', city);
+    if (postal.isNotEmpty) await prefs.setString('guest_postal', postal);
+    // Persist the delivery date so it survives the auth flow
+    final nextDate = data['nextDate'];
+    if (nextDate is DateTime) {
+      saveSelectedDeliveryDate(nextDate);
+    }
   }
 
   /// Creates a server-side address from onboarding data and selects it + the

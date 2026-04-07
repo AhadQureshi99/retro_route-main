@@ -2,14 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:retro_route/config/delivery_zones.dart';
 import 'package:retro_route/model/setup_profile_model.dart';
 import 'package:retro_route/repository/setup_profile_repo.dart';
 import 'package:retro_route/utils/app_routes.dart';
 import 'package:retro_route/utils/app_toast.dart';
 import 'package:retro_route/view/auth/setup/delivery_safety_screen.dart';
 import 'package:retro_route/view/auth/setup/water_setup_screen.dart';
+import 'package:retro_route/view/dashboard/dashboard_view.dart';
+import 'package:retro_route/view_model/address_view_model/address_view_model.dart';
+import 'package:retro_route/view_model/address_view_model/selected_delivery_address_view_model.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/view_model/bottom_nav_view_model.dart';
+import 'package:retro_route/view_model/selected_delivery_date_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PostSignupSetupScreen extends ConsumerStatefulWidget {
   const PostSignupSetupScreen({super.key});
@@ -58,7 +64,72 @@ class _PostSignupSetupScreenState extends ConsumerState<PostSignupSetupScreen> {
     final lastIndex = await loadPersistedBottomNavIndex();
     ref.read(bottomNavProvider.notifier).state = lastIndex;
     if (!mounted) return;
+
+    // Restore guest session: create server address from onboarding data
+    await _restoreGuestAddress();
+
+    HomeDashboardScreen.suppressMilkRunForSession = true;
     goRouter.go(AppRoutes.host);
+  }
+
+  /// Creates a server-side address from locally saved guest onboarding data
+  /// (street, city, postal) so checkout has an address ready.
+  Future<void> _restoreGuestAddress() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final street = prefs.getString('guest_street') ?? '';
+      final city = prefs.getString('guest_city') ?? '';
+      final postal = prefs.getString('guest_postal') ?? '';
+
+      // Nothing to restore
+      if (city.isEmpty && street.isEmpty) return;
+
+      final token = ref.read(authNotifierProvider).value?.data?.token ?? '';
+      if (token.isEmpty) return;
+
+      final user = ref.read(authNotifierProvider).value?.data?.user;
+
+      final success = await ref.read(addressProvider.notifier).addAddress(
+        token: token,
+        addressLine: street,
+        city: city,
+        statess: 'ON',
+        country: 'CA',
+        postalCode: postal,
+        phone: user?.phone ?? '',
+        fullName: user?.name ?? '',
+      );
+
+      if (success) {
+        // Select the newly created address for checkout
+        final addresses = ref.read(addressProvider).addresses;
+        if (addresses.isNotEmpty) {
+          ref.read(selectedDeliveryAddressProvider.notifier)
+              .selectAddress(addresses.first);
+        }
+
+        // Restore delivery date if saved
+        final savedDate = await loadSelectedDeliveryDate();
+        if (savedDate != null) {
+          ref.read(selectedDeliveryDateProvider.notifier).state = savedDate;
+        } else {
+          // Compute next delivery date from zone
+          final zone = detectZoneByCity(city);
+          if (zone != null) {
+            final nextDate = getNextDeliveryDateFromDays(zone.deliveryDays);
+            ref.read(selectedDeliveryDateProvider.notifier).state = nextDate;
+            saveSelectedDeliveryDate(nextDate);
+          }
+        }
+      }
+
+      // Clean up guest keys regardless of success
+      await prefs.remove('guest_street');
+      await prefs.remove('guest_city');
+      await prefs.remove('guest_postal');
+    } catch (e) {
+      debugPrint('[PostSignup] Failed to restore guest address: $e');
+    }
   }
 
   Future<void> _handleSave() async {

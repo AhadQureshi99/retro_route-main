@@ -87,7 +87,7 @@ class CartScreen extends ConsumerWidget {
         leading: GestureDetector(
           onTap: () {
             ref.read(cartProvider.notifier).clear();
-            goRouter.go('${AppRoutes.onboarding}?screen=4');
+            goRouter.go('${AppRoutes.onboarding}?screen=3');
           },
           child: Container(
             margin: EdgeInsets.only(left: 10.w, top: 8.h, bottom: 8.h),
