@@ -87,4 +87,18 @@ class CrateRepo {
       rethrow;
     }
   }
+
+  /// Fetch all pool report cards for the customer
+  Future<Map<String, dynamic>> getMyPoolReports({
+    required String token,
+  }) async {
+    try {
+      log("Fetching my pool reports");
+      final response = await _apiServices.getApi(AppUrls.myPoolReports, token);
+      return response as Map<String, dynamic>;
+    } catch (e, stack) {
+      log("Fetch my pool reports failed: $e", stackTrace: stack);
+      rethrow;
+    }
+  }
 }

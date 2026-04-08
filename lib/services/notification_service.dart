@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:retro_route/utils/app_routes.dart';
+import 'package:retro_route/view/dashboard/dashboard_view.dart';
 
 class NotificationServices {
   static final FirebaseMessaging messaging = FirebaseMessaging.instance;
@@ -143,6 +144,9 @@ class NotificationServices {
       pendingNotificationData = data;
       return;
     }
+
+    // Suppress milk run so the dashboard doesn't hijack navigation.
+    HomeDashboardScreen.suppressMilkRunForSession = true;
 
     if (screen != null) {
       switch (screen) {

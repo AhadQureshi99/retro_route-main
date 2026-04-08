@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
@@ -50,6 +51,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   int _currentCarouselIndex = 0;
   OverlayEntry? _filterOverlay;
   final LayerLink _filterLayerLink = LayerLink();
+  Timer? _searchDebounce;
 
   // Single guard flag – prevents stacking multiple no-internet dialogs
   bool _noInternetDialogShown = false;
@@ -63,8 +65,13 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text.trim().toLowerCase();
+      _searchDebounce?.cancel();
+      _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          setState(() {
+            _searchQuery = _searchController.text.trim().toLowerCase();
+          });
+        }
       });
     });
 
@@ -97,6 +104,11 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     if (data == null) return;
     NotificationServices.instance.pendingNotificationData = null;
     NotificationServices.instance.openedFromNotification = false;
+
+    // Suppress milk run so the async _tryShowWaterTestPopup doesn't
+    // hijack navigation after we've already routed to the target screen.
+    HomeDashboardScreen.suppressMilkRunForSession = true;
+    if (mounted) setState(() => _checkingMilkRun = false);
 
     final screen = data['screen'] as String?;
     final orderId = data['orderId'] as String?;
@@ -172,6 +184,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _filterOverlay?.remove();
     _filterOverlay = null;
     _searchController.dispose();
@@ -839,7 +852,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                     _noInternetDialogShown = false;
                                     ref.invalidate(sliderProvider);
                                     ref.invalidate(categoriesProvider);
-                                    ref.invalidate(productsProvider(selectedCategory?.id));
+                                    ref.invalidate(productsProvider(productCategoryId));
                                   },
                                 );
                               }
@@ -1100,7 +1113,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                     _noInternetDialogShown = false;
                                     ref.invalidate(sliderProvider);
                                     ref.invalidate(categoriesProvider);
-                                    ref.invalidate(productsProvider(selectedCategory?.id));
+                                    ref.invalidate(productsProvider(productCategoryId));
                                   },
                                 );
                               }
@@ -1335,7 +1348,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                     _noInternetDialogShown = false;
                                     ref.invalidate(sliderProvider);
                                     ref.invalidate(categoriesProvider);
-                                    ref.invalidate(productsProvider(selectedCategory?.id));
+                                    ref.invalidate(productsProvider(productCategoryId));
                                   },
                                 );
                               }

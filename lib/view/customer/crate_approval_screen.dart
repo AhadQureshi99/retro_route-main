@@ -381,10 +381,8 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
                                     final name = item['name'] ?? '';
                                     final reason = item['reason'] ?? '';
                                     final size = item['size'] ?? '';
-                                    final sku = item['sku'] ?? '';
                                     final qty = (item['qty'] as num?)?.toInt() ?? 1;
                                     final price = (item['price'] as num?)?.toDouble() ?? 0;
-                                    final urgent = item['urgent'] == true;
                                     final lineTotal = price * qty;
                                     final isOn = _enabled.contains(idx);
 
@@ -425,16 +423,6 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
                                                     : null,
                                               ),
                                             ),
-                                            // Urgency dot
-                                            Container(
-                                              width: 10.w,
-                                              height: 10.w,
-                                              margin: EdgeInsets.only(top: 4.h),
-                                              decoration: BoxDecoration(
-                                                color: urgent ? Colors.red[700] : AppColors.primary,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
                                             SizedBox(width: 10.w),
                                           Expanded(
                                             child: Column(
@@ -469,26 +457,11 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
                                                         ),
                                                       ),
                                                     ),
-                                                    if (urgent) ...[
-                                                      SizedBox(width: 6.w),
-                                                      Container(
-                                                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                                                        decoration: BoxDecoration(
-                                                          color: Colors.red[50],
-                                                          borderRadius: BorderRadius.circular(4.r),
-                                                          border: Border.all(color: Colors.red.shade200),
-                                                        ),
-                                                        child: Text('URGENT',
-                                                            style: GoogleFonts.inter(
-                                                                fontSize: 8.sp,
-                                                                fontWeight: FontWeight.w800,
-                                                                color: Colors.red[700])),
-                                                      ),
-                                                    ],
+
                                                   ],
                                                 ),
                                                 SizedBox(height: 2.h),
-                                                Text('$reason${sku.isNotEmpty ? " (SKU $sku)" : ""}',
+                                                Text(reason,
                                                     style: GoogleFonts.inter(
                                                         fontSize: 11.sp,
                                                         fontWeight: FontWeight.w500,
@@ -538,13 +511,18 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
                               ),
                               child: Column(
                                 children: [
-                                  _priceRow('Products ($_enabledCount items)', '\$${_subtotal.toStringAsFixed(2)}'),
+                                  _priceRow('Products (×$_enabledCount)', '\$${_subtotal.toStringAsFixed(2)}'),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                                    child: Divider(height: 1, color: Colors.grey.shade300),
+                                  ),
                                   if (_crateCredit > 0)
                                     _priceRow(
                                       'Water Test Credit (incl. HST)',
                                       '-\$${_crateCredit.toStringAsFixed(2)}',
                                       valueColor: const Color(0xFF2E7D32),
                                     ),
+                                  _priceRow('Subtotal', '\$${_afterCredit.toStringAsFixed(2)}'),
                                   _priceRow('HST (13%)', '\$${_hst.toStringAsFixed(2)}'),
                                   Padding(
                                     padding: EdgeInsets.symmetric(vertical: 8.h),

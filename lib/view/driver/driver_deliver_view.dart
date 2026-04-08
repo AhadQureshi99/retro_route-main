@@ -308,6 +308,91 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
                   ),
                 ),
 
+              // Qty changed items section
+              Builder(builder: (_) {
+                final qtyChanged = widget.delivery.crateApprovedItems.where((item) {
+                  final origQty = (item['originalQty'] as num?)?.toInt();
+                  final qty = (item['qty'] as num?)?.toInt() ?? 1;
+                  return origQty != null && origQty != qty;
+                }).toList();
+                if (qtyChanged.isEmpty) return const SizedBox.shrink();
+                return Container(
+                  padding: EdgeInsets.all(12.w),
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: Colors.blue.withOpacity(0.3))),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Icon(Icons.swap_horiz, color: Colors.blue[700], size: 18.sp),
+                        SizedBox(width: 8.w),
+                        Text(
+                            'QTY CHANGED BY CUSTOMER (${qtyChanged.length})',
+                            style: GoogleFonts.inter(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.blue[700],
+                                letterSpacing: 0.8)),
+                      ]),
+                      SizedBox(height: 8.h),
+                      ...qtyChanged.map((item) {
+                        final name = item['name'] ?? '';
+                        final sku = item['sku'] ?? '';
+                        final origQty = (item['originalQty'] as num?)?.toInt() ?? 1;
+                        final qty = (item['qty'] as num?)?.toInt() ?? 1;
+                        final price = (item['price'] as num?)?.toDouble() ?? 0;
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 6.h),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                qty > origQty ? Icons.arrow_upward : Icons.arrow_downward,
+                                size: 14.sp,
+                                color: qty > origQty ? Colors.blue[700] : DriverColors.amber,
+                              ),
+                              SizedBox(width: 10.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    RichText(
+                                      text: TextSpan(children: [
+                                        TextSpan(
+                                          text: name,
+                                          style: GoogleFonts.inter(
+                                              fontSize: 13.sp,
+                                              fontWeight: FontWeight.w800,
+                                              color: DriverColors.text)),
+                                        TextSpan(
+                                          text: '  ×$origQty → ×$qty',
+                                          style: GoogleFonts.inter(
+                                              fontSize: 11.sp,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.blue[700])),
+                                      ]),
+                                    ),
+                                    Text(
+                                        '(SKU $sku) · \$${(price * qty).toStringAsFixed(2)}',
+                                        style: GoogleFonts.inter(
+                                            fontSize: 10.sp,
+                                            fontWeight: FontWeight.w500,
+                                            color: DriverColors.textHint)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                );
+              }),
+
               // Checklist
               DriverInfoCard(
                 title: 'Checklist',

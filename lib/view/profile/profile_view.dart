@@ -369,13 +369,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             curve: Curves.easeOutCubic,
           ),
           _profileTile(
+            icon: Icons.assignment_outlined,
+            title: "Pool Report Cards",
+            onTap: () => goRouter.push(AppRoutes.poolReportsList),
+          ).animate().slideX(
+            begin: -0.4,
+            end: 0,
+            delay: 640.ms,
+            duration: 600.ms,
+            curve: Curves.easeOutCubic,
+          ),
+          _profileTile(
             icon: Icons.description_outlined,
             title: 'Terms & Conditions',
             onTap: () => goRouter.push(AppRoutes.termsConditions),
           ).animate().slideX(
             begin: -0.4,
             end: 0,
-            delay: 650.ms,
+            delay: 680.ms,
             duration: 600.ms,
             curve: Curves.easeOutCubic,
           ),

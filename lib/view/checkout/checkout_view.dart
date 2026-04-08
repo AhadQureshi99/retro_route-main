@@ -753,6 +753,28 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           borderColor: _isOutOfZone ? Colors.grey.shade400 : AppColors.btnColor,
           isCircular: false,
         ),
+            SizedBox(height: 8.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_outline, size: 14.sp, color: Colors.grey[500]),
+                SizedBox(width: 4.w),
+                Text(
+                  "Secured payment by",
+                  style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
+                ),
+                SizedBox(width: 4.w),
+                Text(
+                  "stripe",
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF635BFF),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

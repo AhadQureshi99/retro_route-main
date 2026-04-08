@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +36,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -47,14 +49,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     });
 
     _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text.trim().toLowerCase();
+      _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          setState(() {
+            _searchQuery = _searchController.text.trim().toLowerCase();
+          });
+        }
       });
     });
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -212,8 +220,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           Expanded(
             child: Builder(
               builder: (context) {
-                // Show shimmer while data is loading
-                if (categoriesAsync.isLoading || productsAsync.isLoading) {
+                // Show shimmer only on initial load (no cached data yet)
+                if ((categoriesAsync.isLoading && !categoriesAsync.hasValue) ||
+                    (productsAsync.isLoading && !productsAsync.hasValue)) {
                   return _buildShimmerGrid();
                 }
 

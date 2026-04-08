@@ -77,3 +77,12 @@ final poolReportProvider =
   final res = await repo.getPoolReport(token: args.$1, orderId: args.$2);
   return res['data'] as Map<String, dynamic>?;
 });
+
+// ── My Pool Reports list ──
+final myPoolReportsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, token) async {
+  final repo = ref.read(crateRepoProvider);
+  final res = await repo.getMyPoolReports(token: token);
+  final list = res['data'] as List<dynamic>? ?? [];
+  return list.cast<Map<String, dynamic>>();
+});

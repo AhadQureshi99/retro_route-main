@@ -18,6 +18,7 @@ import 'package:retro_route/view/checkout/checkout_view.dart';
 import 'package:retro_route/view/checkout/order_success_view.dart';
 import 'package:retro_route/view/customer/crate_approval_screen.dart';
 import 'package:retro_route/view/customer/pool_report_screen.dart';
+import 'package:retro_route/view/customer/pool_reports_list_screen.dart';
 import 'package:retro_route/view/dashboard/dashboard_view.dart';
 import 'package:retro_route/view/driver/driver_crate_view.dart';
 import 'package:retro_route/view/driver/driver_deliver_view.dart';
@@ -76,6 +77,7 @@ class AppRoutes {
   static const deliverySafety = '/delivery-safety';
   static const crateApproval = '/crate-approval';
   static const poolReport = '/pool-report';
+  static const poolReportsList = '/pool-reports';
   static const notifications = '/notifications';
   static const changeDeliveryDate = '/change-delivery-date';
 }
@@ -226,6 +228,10 @@ final goRouter = GoRouter(
             final orderId = state.uri.queryParameters['orderId'] ?? '';
             return PoolReportScreen(orderId: orderId);
           },
+        ),
+        GoRoute(
+          path: AppRoutes.poolReportsList,
+          builder: (context, state) => const PoolReportsListScreen(),
         ),
         GoRoute(
           path: AppRoutes.notifications,

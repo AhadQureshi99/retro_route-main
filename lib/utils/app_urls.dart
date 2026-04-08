@@ -53,6 +53,7 @@ class AppUrls {
   static String approveCrate(String orderId) => "$baseUrl/api/v1/water-test/approve-crate/$orderId";
   static String declineCrate(String orderId) => "$baseUrl/api/v1/water-test/decline-crate/$orderId";
   static String poolReport(String orderId) => "$baseUrl/api/v1/water-test/pool-report/$orderId";
+  static const String myPoolReports = "$baseUrl/api/v1/water-test/my-reports";
 
   // ? fcm token
   static const String saveFcmToken = "$baseUrl/api/v1/user/fcm-token";

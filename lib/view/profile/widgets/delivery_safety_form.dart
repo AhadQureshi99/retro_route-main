@@ -41,6 +41,7 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
   late TextEditingController _dropOffDetailsCtrl;
   late TextEditingController _dogNotesCtrl;
   late TextEditingController _gateCodeCtrl;
+  late TextEditingController _gateLocationOtherCtrl;
   bool _isLoadingLocation = false;
   bool _isSelectingStreetSuggestion = false;
   DeliveryZone? _detectedZone;
@@ -84,6 +85,7 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
     _dropOffDetailsCtrl = TextEditingController(text: d.dropOffDetails);
     _dogNotesCtrl = TextEditingController(text: d.dogSafety.dogNotes);
     _gateCodeCtrl = TextEditingController(text: d.gateEntry.gateCode);
+    _gateLocationOtherCtrl = TextEditingController(text: d.gateEntry.gateLocationOther);
 
     _cityCtrl.addListener(_onCityChanged);
     _detectedZone = cityVal.trim().isNotEmpty ? detectZoneByCity(cityVal) : null;
@@ -128,6 +130,7 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
     _dropOffDetailsCtrl.dispose();
     _dogNotesCtrl.dispose();
     _gateCodeCtrl.dispose();
+    _gateLocationOtherCtrl.dispose();
     super.dispose();
   }
 
@@ -789,6 +792,7 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
                 spacing: 8.w,
                 runSpacing: 8.h,
                 children: [
+                  {'value': 'noGate', 'label': 'No gate'},
                   {'value': 'unlocked', 'label': 'Gate is unlocked'},
                   {'value': 'codeLock', 'label': 'Gate has a code/lock'},
                 ]
@@ -803,6 +807,7 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
                         ))
                     .toList(),
               ),
+              if (d.gateEntry.accessMethod != 'noGate') ...[
               SizedBox(height: 12.h),
               _smallLabel("Gate location"),
               SizedBox(height: 8.h),
@@ -830,9 +835,18 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
                 SizedBox(height: 10.h),
                 _textField(
                   controller: _gateCodeCtrl,
-                  hint: "Gate code / lock combo (optional)",
+                  hint: "Gate code / lock combo",
                   onChanged: (v) => _update(d.copyWith(
                       gateEntry: d.gateEntry.copyWith(gateCode: v))),
+                ),
+              ],
+              if (d.gateEntry.gateLocation == 'other') ...[
+                SizedBox(height: 10.h),
+                _textField(
+                  controller: _gateLocationOtherCtrl,
+                  hint: "Describe gate location",
+                  onChanged: (v) => _update(d.copyWith(
+                      gateEntry: d.gateEntry.copyWith(gateLocationOther: v))),
                 ),
               ],
               SizedBox(height: 10.h),
@@ -854,6 +868,7 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
                   ],
                 ),
               ),
+              ],
             ],
           ),
           SizedBox(height: 16.h),

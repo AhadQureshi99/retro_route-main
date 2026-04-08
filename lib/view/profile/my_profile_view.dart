@@ -644,7 +644,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
           ),
           if (ws.pool.estimatedVolume > 0)
             _infoRow(
-                "Volume", "${_formatNum(ws.pool.estimatedVolume)} gal"),
+                "Volume",
+                ws.pool.volumeUnit == 'liters'
+                    ? "${_formatNum((ws.pool.estimatedVolume * 3.785).round())} L"
+                    : "${_formatNum(ws.pool.estimatedVolume)} gal"),
           if (ws.pool.shape.isNotEmpty)
             _infoRow("Shape", _shapeLabels[ws.pool.shape]),
           if (ws.pool.length > 0)
@@ -677,7 +680,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ? ws.hotTub.customVolume
                 : ws.hotTub.volume.isNotEmpty &&
                         ws.hotTub.volume != 'addOther'
-                    ? "${ws.hotTub.volume} gal"
+                    ? "${ws.hotTub.volume} ${ws.pool.volumeUnit == 'liters' ? 'L' : 'gal'}"
                     : null,
           ),
           _infoRow("Sanitizer",

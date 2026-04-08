@@ -8,6 +8,7 @@ import 'package:retro_route/components/custom_spacer.dart';
 import 'package:retro_route/components/custom_text.dart';
 import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
+import 'package:retro_route/view/dashboard/dashboard_view.dart';
 import 'package:retro_route/view_model/bottom_nav_view_model.dart';
 
 class OrderSuccessScreen extends ConsumerStatefulWidget {
@@ -417,6 +418,7 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
                 height: 54,
                 width: double.infinity,
                 onPressed: () {
+                  HomeDashboardScreen.suppressMilkRunForSession = true;
                   ref.read(bottomNavProvider.notifier).state = BottomNavIndex.home;
                   goRouter.go(AppRoutes.host);
                 },

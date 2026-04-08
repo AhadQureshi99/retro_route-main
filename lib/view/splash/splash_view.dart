@@ -11,6 +11,7 @@ import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/services/notification_service.dart';
+import 'package:retro_route/view/dashboard/dashboard_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -134,6 +135,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     final data = NotificationServices.instance.pendingNotificationData;
     if (data == null) return;
     NotificationServices.instance.pendingNotificationData = null;
+
+    // Suppress milk run so the dashboard doesn't hijack navigation.
+    HomeDashboardScreen.suppressMilkRunForSession = true;
 
     // Small delay to let GoRouter finish the go() transition
     Future.delayed(const Duration(milliseconds: 500), () {

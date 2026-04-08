@@ -37,6 +37,7 @@ const _backyardOptions = [
 ];
 
 const _gateAccess = [
+  {'value': 'noGate', 'label': 'No gate'},
   {'value': 'unlocked', 'label': 'Gate is unlocked'},
   {'value': 'codeLock', 'label': 'Gate has a code/lock'},
 ];
@@ -79,6 +80,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
   late TextEditingController _dropOffDetailsCtrl;
   late TextEditingController _dogNotesCtrl;
   late TextEditingController _gateCodeCtrl;
+  late TextEditingController _gateLocationOtherCtrl;
   bool _isLoadingLocation = false;
   bool _isSelectingStreetSuggestion = false;
   List<String> _citySuggestions = [];
@@ -125,6 +127,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
     );
     _dogNotesCtrl = TextEditingController(text: widget.data.dogSafety.dogNotes);
     _gateCodeCtrl = TextEditingController(text: widget.data.gateEntry.gateCode);
+    _gateLocationOtherCtrl = TextEditingController(text: widget.data.gateEntry.gateLocationOther);
 
     if (cityVal.trim().isNotEmpty) {
       _detectedZone = detectZoneByCity(cityVal);
@@ -141,6 +144,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
     _dropOffDetailsCtrl.dispose();
     _dogNotesCtrl.dispose();
     _gateCodeCtrl.dispose();
+    _gateLocationOtherCtrl.dispose();
     super.dispose();
   }
 
@@ -299,7 +303,10 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
       address: parts.join(', '),
       dropOffDetails: _dropOffDetailsCtrl.text,
       dogSafety: current.dogSafety.copyWith(dogNotes: _dogNotesCtrl.text),
-      gateEntry: current.gateEntry.copyWith(gateCode: _gateCodeCtrl.text),
+      gateEntry: current.gateEntry.copyWith(
+        gateCode: _gateCodeCtrl.text,
+        gateLocationOther: _gateLocationOtherCtrl.text,
+      ),
     );
   }
 
@@ -827,6 +834,19 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
                     );
                   }).toList(),
                 ),
+                if (d.gateEntry.accessMethod != 'noGate') ...[
+                if (d.gateEntry.accessMethod == 'codeLock') ...[
+                  SizedBox(height: 10.h),
+                  _textField(
+                    controller: _gateCodeCtrl,
+                    hint: "Gate code / lock combo",
+                    onChanged: (v) => _update(
+                      (s) => s.copyWith(
+                        gateEntry: s.gateEntry.copyWith(gateCode: v),
+                      ),
+                    ),
+                  ),
+                ],
                 SizedBox(height: 12.h),
                 Text("Gate location", style: _label),
                 SizedBox(height: 8.h),
@@ -846,14 +866,14 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
                     );
                   }).toList(),
                 ),
-                if (d.gateEntry.accessMethod == 'codeLock') ...[
+                if (d.gateEntry.gateLocation == 'other') ...[
                   SizedBox(height: 10.h),
                   _textField(
-                    controller: _gateCodeCtrl,
-                    hint: "Gate code / lock combo (optional)",
+                    controller: _gateLocationOtherCtrl,
+                    hint: "Describe gate location",
                     onChanged: (v) => _update(
                       (s) => s.copyWith(
-                        gateEntry: s.gateEntry.copyWith(gateCode: v),
+                        gateEntry: s.gateEntry.copyWith(gateLocationOther: v),
                       ),
                     ),
                   ),
@@ -883,6 +903,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
                     ],
                   ),
                 ),
+                ], // end noGate check
               ],
             ),
           ),

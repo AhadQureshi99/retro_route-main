@@ -174,11 +174,13 @@ class DogSafety {
 class GateEntry {
   String accessMethod;
   String gateLocation;
+  String gateLocationOther;
   String gateCode;
 
   GateEntry({
     this.accessMethod = '',
     this.gateLocation = '',
+    this.gateLocationOther = '',
     this.gateCode = '',
   });
 
@@ -186,6 +188,7 @@ class GateEntry {
     return GateEntry(
       accessMethod: json['accessMethod'] as String? ?? '',
       gateLocation: json['gateLocation'] as String? ?? '',
+      gateLocationOther: json['gateLocationOther'] as String? ?? '',
       gateCode: json['gateCode'] as String? ?? '',
     );
   }
@@ -193,17 +196,20 @@ class GateEntry {
   Map<String, dynamic> toJson() => {
         'accessMethod': accessMethod,
         'gateLocation': gateLocation,
+        'gateLocationOther': gateLocationOther,
         'gateCode': gateCode,
       };
 
   GateEntry copyWith({
     String? accessMethod,
     String? gateLocation,
+    String? gateLocationOther,
     String? gateCode,
   }) {
     return GateEntry(
       accessMethod: accessMethod ?? this.accessMethod,
       gateLocation: gateLocation ?? this.gateLocation,
+      gateLocationOther: gateLocationOther ?? this.gateLocationOther,
       gateCode: gateCode ?? this.gateCode,
     );
   }

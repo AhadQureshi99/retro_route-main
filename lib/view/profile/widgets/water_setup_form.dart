@@ -435,6 +435,25 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
               SizedBox(height: 12.h),
               _smallLabel("Hot tub volume"),
               SizedBox(height: 8.h),
+
+              // ── Unit toggle ──
+              Row(
+                children: [
+                  Text("Unit:", style: GoogleFonts.inter(fontSize: 11.sp, color: Colors.grey[500])),
+                  SizedBox(width: 8.w),
+                  _chip('Gallons', _volumeUnit == 'gallons', () {
+                    setState(() => _volumeUnit = 'gallons');
+                    _update(w.copyWith(pool: w.pool.copyWith(volumeUnit: 'gallons')));
+                  }, Colors.blue),
+                  SizedBox(width: 6.w),
+                  _chip('Liters', _volumeUnit == 'liters', () {
+                    setState(() => _volumeUnit = 'liters');
+                    _update(w.copyWith(pool: w.pool.copyWith(volumeUnit: 'liters')));
+                  }, Colors.blue),
+                ],
+              ),
+              SizedBox(height: 10.h),
+
               Wrap(
                 spacing: 8.w,
                 runSpacing: 8.h,

@@ -15,7 +15,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   Stripe.publishableKey =
       "pk_test_51QaZkMHxqEkEAwMAn2bzy8c7nRda7DEtaz1I0L3BtWQ87L132axKb5yvSrdFfiLki6JaOqoty1ViI4NjRtXBGP0700Lr1BctnB";
-  NotificationServices.instance.initialize();
+  await NotificationServices.instance.initialize();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   runApp(
     ProviderScope(
