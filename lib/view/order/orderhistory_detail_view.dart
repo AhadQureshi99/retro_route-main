@@ -6,6 +6,7 @@ import 'package:retro_route/components/custom_spacer.dart';
 import 'package:retro_route/components/custom_text.dart';
 import 'package:retro_route/model/orderhistory_model.dart';
 import 'package:retro_route/utils/app_colors.dart';
+import 'package:retro_route/utils/app_urls.dart';
 
 class OrderDetailsScreen extends StatelessWidget {
   final Order order;
@@ -90,7 +91,7 @@ class OrderDetailsScreen extends StatelessWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12.r),
                         child: CachedNetworkImage(
-                          imageUrl: prod.images.isNotEmpty ? prod.images.first : '',
+                          imageUrl: prod.firstImage,
                           width: 70.w,
                           height: 70.w,
                           fit: BoxFit.cover,
@@ -160,7 +161,8 @@ class OrderDetailsScreen extends StatelessWidget {
                     final price = (item['price'] as num?)?.toDouble() ?? 0;
                     final reason = item['reason']?.toString() ?? '';
                     final size = item['size']?.toString() ?? '';
-                    final image = item['image']?.toString() ?? '';
+                    final rawImage = item['image']?.toString() ?? '';
+                    final image = rawImage.startsWith('/') ? '${AppUrls.baseUrl}$rawImage' : rawImage;
                     return Padding(
                       padding: EdgeInsets.only(bottom: 12.h),
                       child: Row(

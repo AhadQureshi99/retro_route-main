@@ -83,8 +83,8 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
       _checkingMilkRun = true;
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _consumePendingNotificationIfAny();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _consumePendingNotificationIfAny();
       _fetchNotifications();
       _tryShowWaterTestPopup();
     });
@@ -99,8 +99,13 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
 
   /// If a notification tap was stored because the context wasn't ready,
   /// consume it now that the dashboard is mounted.
-  void _consumePendingNotificationIfAny() {
-    final data = NotificationServices.instance.pendingNotificationData;
+  Future<void> _consumePendingNotificationIfAny() async {
+    var data = NotificationServices.instance.pendingNotificationData;
+
+    // Fallback: check SharedPreferences for persisted notification data
+    // (covers cases where getInitialMessage() returned null).
+    data ??= await NotificationServices.consumePendingNavFromPrefs();
+
     if (data == null) return;
     NotificationServices.instance.pendingNotificationData = null;
     NotificationServices.instance.openedFromNotification = false;
@@ -158,6 +163,13 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
       return;
     }
 
+    // Check SharedPreferences for any pending notification tap
+    // (catches late-arriving onMessageOpenedApp events).
+    if (await NotificationServices.hasPendingNavInPrefs()) {
+      if (mounted) setState(() => _checkingMilkRun = false);
+      return;
+    }
+
     if (!mounted) return;
 
     // Only show for authenticated users (matches web: if (!isAuthenticated) return null)
@@ -173,6 +185,16 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     // Wait for the provider to resolve
     final product = await ref.read(waterTestProvider.future);
     if (!mounted) return;
+
+    // Re-check after async gap — a notification tap may have come in
+    // while we were waiting for the water-test provider to resolve.
+    if (HomeDashboardScreen.suppressMilkRunForSession ||
+        NotificationServices.instance.openedFromNotification ||
+        NotificationServices.instance.pendingNotificationData != null ||
+        await NotificationServices.hasPendingNavInPrefs()) {
+      if (mounted) setState(() => _checkingMilkRun = false);
+      return;
+    }
 
     if (product != null) {
       _milkRunPopupShownThisSession = true;

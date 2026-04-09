@@ -345,7 +345,7 @@ class _OrderCard extends StatelessWidget {
                 children: [
                   customText(
                     text:
-                        "${order.products.length} item${order.products.length > 1 ? 's' : ''}",
+                        "${order.totalItemCount} item${order.totalItemCount > 1 ? 's' : ''}",
                     fontSize: 14,
                     color: Colors.black,
                     fontWeight: FontWeight.w500,

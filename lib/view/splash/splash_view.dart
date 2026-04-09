@@ -96,8 +96,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
         final role = authData?.data?.user.role ?? 'User';
         if (role.toLowerCase() == 'driver') {
           print("Navigating to DRIVER HOME because role is Driver");
+          // If the app was opened from a notification tap, navigate
+          // directly to the notification target screen.
+          if (NotificationServices.instance.pendingNotificationData != null ||
+              NotificationServices.instance.openedFromNotification ||
+              await NotificationServices.hasPendingNavInPrefs()) {
+            await _navigateToNotificationTarget(fallback: AppRoutes.driverHome);
+            return;
+          }
           goRouter.go(AppRoutes.driverHome);
-          _consumePendingNotification();
         } else {
           // Check if user has completed setup
           final token = authData?.data?.token ?? '';
@@ -118,8 +125,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
             goRouter.go(AppRoutes.setup);
           } else {
             print("Navigating to HOST because session is valid and setup completed");
+            // If the app was opened from a notification tap, navigate
+            // directly to the notification target screen.
+            if (NotificationServices.instance.pendingNotificationData != null ||
+                NotificationServices.instance.openedFromNotification ||
+                await NotificationServices.hasPendingNavInPrefs()) {
+              await _navigateToNotificationTarget(fallback: AppRoutes.host);
+              return;
+            }
             goRouter.go(AppRoutes.host);
-            _consumePendingNotification();
           }
         }
       } else {
@@ -129,48 +143,51 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     }
   }
 
-  /// If the app was launched from a notification tap, navigate to that screen
-  /// after the normal splash flow completes.
-  void _consumePendingNotification() {
-    final data = NotificationServices.instance.pendingNotificationData;
-    if (data == null) return;
-    NotificationServices.instance.pendingNotificationData = null;
-
-    // Suppress milk run so the dashboard doesn't hijack navigation.
+  /// Consumes pending notification data and navigates directly to the
+  /// target screen. This avoids going to /host first and relying on the
+  /// dashboard to pick up the pending data (which can race with the
+  /// milk-run redirect).
+  Future<void> _navigateToNotificationTarget({required String fallback}) async {
     HomeDashboardScreen.suppressMilkRunForSession = true;
 
-    // Small delay to let GoRouter finish the go() transition
-    Future.delayed(const Duration(milliseconds: 500), () {
-      final ctx = rootNavigatorKey.currentContext;
-      if (ctx == null) return;
+    var data = NotificationServices.instance.pendingNotificationData;
+    NotificationServices.instance.pendingNotificationData = null;
+    NotificationServices.instance.openedFromNotification = false;
 
+    // Fallback: read from SharedPreferences if in-memory data is missing
+    // (getInitialMessage() can return null on some Android devices).
+    data ??= await NotificationServices.consumePendingNavFromPrefs();
+
+    if (data != null) {
       final screen = data['screen'] as String?;
       final orderId = data['orderId'] as String?;
 
-      if (screen != null) {
-        switch (screen) {
-          case 'CrateApproval':
-            if (orderId != null) {
-              GoRouter.of(ctx).push('${AppRoutes.crateApproval}?orderId=$orderId');
-              return;
-            }
-          case 'PoolReport':
-            if (orderId != null) {
-              GoRouter.of(ctx).push('${AppRoutes.poolReport}?orderId=$orderId');
-              return;
-            }
-          case 'OrderHistory':
-            GoRouter.of(ctx).go(AppRoutes.orderHistory);
+      switch (screen) {
+        case 'OrderHistory':
+          goRouter.go(AppRoutes.orderHistory);
+          return;
+        case 'CrateApproval':
+          if (orderId != null) {
+            goRouter.go('${AppRoutes.crateApproval}?orderId=$orderId');
             return;
-          case 'DriverDeliveries':
-          case 'DriverOrderDetail':
-            GoRouter.of(ctx).go(AppRoutes.driverHome);
+          }
+        case 'PoolReport':
+          if (orderId != null) {
+            goRouter.go('${AppRoutes.poolReport}?orderId=$orderId');
             return;
-        }
+          }
+        case 'DriverDeliveries':
+        case 'DriverOrderDetail':
+          goRouter.go(AppRoutes.driverHome);
+          return;
       }
+    }
 
-      GoRouter.of(ctx).go(AppRoutes.notifications);
-    });
+    // Clear any prefs that might remain
+    await NotificationServices.clearPendingNavFromPrefs();
+
+    // Fallback: go to the default screen with suppression active
+    goRouter.go(fallback);
   }
 
   @override

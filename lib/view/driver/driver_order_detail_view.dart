@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +14,7 @@ import 'package:retro_route/model/driver_delivery_model.dart';
 import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
 import 'package:retro_route/utils/app_toast.dart';
+import 'package:retro_route/utils/app_urls.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/view_model/driver_view_model/driver_view_model.dart';
 import 'package:geolocator/geolocator.dart';
@@ -408,6 +410,131 @@ class _DriverOrderDetailScreenState
                           [],
                     ),
                   ),
+
+                  // Water Test Crate Items (if any)
+                  if (delivery.pendingCrate != null &&
+                      (delivery.pendingCrate!['items'] as List?)?.isNotEmpty == true &&
+                      ['approved', 'paid', 'delivered'].contains(delivery.pendingCrate!['status'])) ...[
+                    verticalSpacer(height: 16),
+                    _buildSectionCard(
+                      title: 'Water Test Crate (${(delivery.pendingCrate!['items'] as List).length})',
+                      icon: Icons.science,
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                            margin: EdgeInsets.only(bottom: 12.h),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2E7D32).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.science_outlined, size: 16.w, color: const Color(0xFF2E7D32)),
+                                horizontalSpacer(width: 6.w),
+                                customText(
+                                  text: "Recommended from water test",
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF2E7D32),
+                                ),
+                              ],
+                            ),
+                          ),
+                          ...(delivery.pendingCrate!['items'] as List).map((item) {
+                            final name = item['name']?.toString() ?? 'Product';
+                            final qty = (item['qty'] as num?)?.toInt() ?? 1;
+                            final price = (item['price'] as num?)?.toDouble() ?? 0;
+                            final reason = item['reason']?.toString() ?? '';
+                            final rawImage = item['image']?.toString() ?? '';
+                            final image = rawImage.startsWith('/') ? '${AppUrls.baseUrl}$rawImage' : rawImage;
+                            return Container(
+                              padding: EdgeInsets.symmetric(vertical: 8.h),
+                              decoration: BoxDecoration(
+                                border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                              ),
+                              child: Row(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    child: Container(
+                                      width: 44.w,
+                                      height: 44.w,
+                                      color: AppColors.bgColor,
+                                      child: image.isNotEmpty
+                                          ? CachedNetworkImage(
+                                              imageUrl: image,
+                                              fit: BoxFit.cover,
+                                              placeholder: (context, url) => Container(color: Colors.grey[200]),
+                                              errorWidget: (context, url, error) =>
+                                                  Icon(Icons.science, color: AppColors.primary, size: 20.sp),
+                                            )
+                                          : Icon(Icons.science, color: AppColors.primary, size: 20.sp),
+                                    ),
+                                  ),
+                                  horizontalSpacer(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        customText(
+                                          text: name,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                        customText(
+                                          text: 'Qty: $qty',
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.normal,
+                                          color: AppColors.primary.withOpacity(0.75),
+                                        ),
+                                        if (reason.isNotEmpty)
+                                          customText(
+                                            text: reason,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.normal,
+                                            color: Colors.grey[500]!,
+                                            maxLine: 2,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  customText(
+                                    text: '\$${price.toStringAsFixed(2)}',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                          Divider(height: 16.h),
+                          _buildPriceRow(
+                            'Crate Subtotal',
+                            '\$${((delivery.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
+                          ),
+                          if ((delivery.pendingCrate!['credit'] as num?)?.toDouble() != null &&
+                              (delivery.pendingCrate!['credit'] as num).toDouble() > 0)
+                            _buildPriceRow(
+                              'Water Test Credit',
+                              '− \$${(delivery.pendingCrate!['credit'] as num).toDouble().toStringAsFixed(2)}',
+                            ),
+                          _buildPriceRow(
+                            'HST (13%)',
+                            '\$${((delivery.pendingCrate!['hst'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
+                          ),
+                          Divider(height: 16.h),
+                          _buildPriceRow(
+                            'Crate Total',
+                            '\$${((delivery.pendingCrate!['total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
+                            isBold: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
 
                   verticalSpacer(height: 16),
 

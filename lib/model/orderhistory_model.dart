@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:retro_route/utils/app_urls.dart';
 
 // Top-level response model
 class OrdersHistoryResponse {
@@ -69,6 +70,7 @@ class Order {
   final String deliveryZone;
   final String deliveryDay;
   final Map<String, dynamic>? pendingCrate;
+  final int totalItemCount;
   final DateTime createdAt;
   final DateTime updatedAt;
   final int version;
@@ -78,6 +80,7 @@ class Order {
     required this.userId,
     required this.orderId,
     required this.products,
+    required this.totalItemCount,
     required this.paymentStatus,
     this.stripePaymentIntentId,
     this.deliveryAddress,
@@ -116,6 +119,7 @@ class Order {
       userId: json['userId']?.toString() ?? '',
       orderId: json['orderId']?.toString() ?? '',
       products: validProducts,
+      totalItemCount: rawProducts.length,
       paymentStatus: json['paymentStatus']?.toString() ?? 'Pending',
       stripePaymentIntentId: json['stripePaymentIntentId'] as String?,
       deliveryAddress: json['deliveryAddress'] != null && json['deliveryAddress'] is Map
@@ -155,6 +159,7 @@ class Order {
         'userId': userId,
         'orderId': orderId,
         'products': products.map((e) => e.toJson()).toList(),
+        'totalItemCount': totalItemCount,
         'paymentStatus': paymentStatus,
         'stripePaymentIntentId': stripePaymentIntentId,
         'deliveryAddress': deliveryAddress?.toJson(),
@@ -288,6 +293,13 @@ class ProductDetail {
         'updatedAt': updatedAt.toIso8601String(),
         '__v': version,
       };
+
+  String get firstImage {
+    if (images.isEmpty) return '';
+    final img = images.first;
+    if (img.startsWith('/')) return '${AppUrls.baseUrl}$img';
+    return img;
+  }
 }
 
 // Nested: Delivery Address

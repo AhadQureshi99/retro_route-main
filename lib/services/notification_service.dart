@@ -30,13 +30,70 @@ class NotificationServices {
 
   static const String _channelDescription = "Important app notifications";
 
+  // ── SharedPreferences-backed notification persistence ──────────
+  // Survives even when getInitialMessage() returns null on some devices.
+  static const String _pendingNavKey = 'pending_nav_json';
+
+  /// Persist notification-tap data so it survives race conditions.
+  static Future<void> savePendingNavToPrefs(Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_pendingNavKey, jsonEncode(data));
+  }
+
+  /// Read and clear persisted notification-tap data.
+  static Future<Map<String, dynamic>?> consumePendingNavFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final json = prefs.getString(_pendingNavKey);
+    if (json == null) return null;
+    await prefs.remove(_pendingNavKey);
+    return jsonDecode(json) as Map<String, dynamic>;
+  }
+
+  /// Check whether there is persisted notification-tap data.
+  static Future<bool> hasPendingNavInPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.containsKey(_pendingNavKey);
+  }
+
+  /// Clear persisted navigation data.
+  static Future<void> clearPendingNavFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_pendingNavKey);
+  }
+
   /// Main initialize function
   Future<void> initialize() async {
     await requestNotificationPermission();
     await _initLocalNotifications();
+    await _checkLaunchNotification();
     await _setupFCMHandlers();
     await _getAndSaveInitialToken();
     _listenForTokenRefresh();
+  }
+
+  /// Check if the app was launched by tapping a local notification.
+  /// This catches cases that FCM getInitialMessage() misses — e.g.
+  /// local notifications shown while the app was in the foreground.
+  Future<void> _checkLaunchNotification() async {
+    try {
+      final details =
+          await _flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+      if (details != null && details.didNotificationLaunchApp) {
+        final response = details.notificationResponse;
+        if (response?.payload != null && response!.payload!.isNotEmpty) {
+          try {
+            final data =
+                jsonDecode(response.payload!) as Map<String, dynamic>;
+            pendingNotificationData = data;
+            openedFromNotification = true;
+            await savePendingNavToPrefs(data);
+          } catch (_) {}
+        } else {
+          // Launched from a notification but no payload
+          openedFromNotification = true;
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> requestNotificationPermission() async {
@@ -102,6 +159,7 @@ class NotificationServices {
         if (payload != null && payload.isNotEmpty) {
           try {
             final data = jsonDecode(payload) as Map<String, dynamic>;
+            savePendingNavToPrefs(data);
             _handleNotificationNavigation(data);
           } catch (_) {}
         }
@@ -121,6 +179,7 @@ class NotificationServices {
         log("App opened from notification: ${message.notification?.title}");
       }
       openedFromNotification = true;
+      savePendingNavToPrefs(message.data);
       _handleNotificationNavigation(message.data);
     });
 
@@ -130,6 +189,7 @@ class NotificationServices {
       // Store the data — SplashScreen will consume it after its own navigation
       pendingNotificationData = initialMessage.data;
       openedFromNotification = true;
+      await savePendingNavToPrefs(initialMessage.data);
     }
   }
 
@@ -142,11 +202,14 @@ class NotificationServices {
     if (ctx == null) {
       // Context not ready yet (app still resuming) — store for later.
       pendingNotificationData = data;
+      openedFromNotification = true;
+      savePendingNavToPrefs(data);
       return;
     }
 
     // Suppress milk run so the dashboard doesn't hijack navigation.
     HomeDashboardScreen.suppressMilkRunForSession = true;
+    clearPendingNavFromPrefs();
 
     if (screen != null) {
       switch (screen) {
@@ -281,8 +344,8 @@ class NotificationServices {
 
     await _flutterLocalNotificationsPlugin.show(
       id: 0,
-      title: message.notification?.title ?? "Notification",
-      body: message.notification?.body ?? "You have a new message",
+      title: message.data['title'] ?? message.notification?.title ?? "Notification",
+      body: message.data['body'] ?? message.notification?.body ?? "You have a new message",
       notificationDetails: NotificationDetails(android: androidDetails, iOS: iosDetails),
       payload: message.data.isNotEmpty ? jsonEncode(message.data) : null,
     );

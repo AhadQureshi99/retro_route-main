@@ -1,4 +1,5 @@
 import 'package:retro_route/model/category_model.dart';
+import 'package:retro_route/utils/app_urls.dart';
 
 class ProductSize {
   final String size;
@@ -210,7 +211,12 @@ class Product {
 
   // Helpers for safer usage
   String get safeName => name ?? 'Unnamed Product';
-  String get firstImage => images?.isNotEmpty == true ? images!.first : '';
+  String get firstImage {
+    if (images == null || images!.isEmpty) return '';
+    final img = images!.first;
+    if (img.startsWith('/')) return '${AppUrls.baseUrl}$img';
+    return img;
+  }
   String get safeBrand => brand ?? 'Unknown Brand';
   double get discountedPrice {
     if (price == null) return 0;

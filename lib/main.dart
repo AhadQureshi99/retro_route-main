@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -28,9 +30,45 @@ void main() async {
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // if (kDebugMode) {
-  print("Background Message Received: ${message.notification?.title}");
-  // }
+  print("Background Message Received: ${message.data['title'] ?? message.notification?.title}");
+
+  // Data-only FCM messages don't produce a system notification, so we
+  // display one via flutter_local_notifications.  When the user taps it,
+  // getNotificationAppLaunchDetails() will reliably return the payload
+  // (unlike FCM getInitialMessage(), which returns null on many devices).
+  final title = message.data['title'] ?? message.notification?.title ?? 'Notification';
+  final body  = message.data['body']  ?? message.notification?.body  ?? 'You have a new message';
+
+  final FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
+  const AndroidInitializationSettings android =
+      AndroidInitializationSettings('@mipmap/launcher_icon');
+  const DarwinInitializationSettings ios = DarwinInitializationSettings();
+  const InitializationSettings initSettings =
+      InitializationSettings(android: android, iOS: ios);
+  await flnp.initialize(settings: initSettings);
+
+  await flnp.show(
+    id: message.hashCode,
+    title: title,
+    body: body,
+    notificationDetails: const NotificationDetails(
+      android: AndroidNotificationDetails(
+        'retro_route_bg',
+        'Retro Route Notifications',
+        channelDescription: 'Important app notifications',
+        importance: Importance.high,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    ),
+    payload: message.data.isNotEmpty ? jsonEncode(message.data) : null,
+  );
 }
 
 class MyApp extends StatelessWidget {

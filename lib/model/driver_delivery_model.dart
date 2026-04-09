@@ -1,4 +1,5 @@
 import 'package:retro_route/model/setup_profile_model.dart';
+import 'package:retro_route/utils/app_urls.dart';
 
 class DriverDeliveriesResponse {
   final int? statusCode;
@@ -390,7 +391,9 @@ class DeliveryProductInfo {
 
   String? get firstImageUrl {
     if (images == null || images!.isEmpty) return null;
-    return images!.first;
+    final img = images!.first;
+    if (img.startsWith('/')) return '${AppUrls.baseUrl}$img';
+    return img;
   }
 }
 
