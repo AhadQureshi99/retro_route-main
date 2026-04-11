@@ -110,14 +110,12 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
     'Saltwater': 'saltwater',
     'Bromine': 'bromine',
     'Add Other': 'addOther',
-    'Not Sure': 'notSure',
   };
 
   static const _hotTubSanitizerMap = {
     'Chlorine': 'chlorine',
     'Bromine': 'bromine',
     'Add Other': 'addOther',
-    'Not Sure': 'notSure',
   };
 
   @override

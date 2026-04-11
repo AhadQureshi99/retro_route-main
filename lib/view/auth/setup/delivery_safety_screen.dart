@@ -26,7 +26,7 @@ const _backyardOptions = [
   {
     'value': 'yes',
     'label': 'Yes — backyard drop-off',
-    'desc': "We'll enter and leave at your water.",
+    'desc': 'Your supplies will be placed in your designated area.',
   },
   {
     'value': 'no',

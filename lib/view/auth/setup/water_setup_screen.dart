@@ -14,10 +14,10 @@ const _waterTypes = [
 ];
 
 const _poolShapes = ['Rectangle', 'Round', 'Oval'];
-const _poolSanitizers = {'Chlorine': 'chlorine', 'Saltwater': 'saltwater', 'Bromine': 'bromine', 'Add Other': 'addOther', 'Not Sure': 'notSure'};
+const _poolSanitizers = {'Chlorine': 'chlorine', 'Saltwater': 'saltwater', 'Bromine': 'bromine', 'Add Other': 'addOther'};
 const _hotTubVolumesGal = {'300 gal': '300', '400 gal': '400', '500 gal': '500', 'Add Other': 'addOther', 'Not Sure': 'notSure'};
 const _hotTubVolumesL = {'1136 L': '300', '1514 L': '400', '1893 L': '500', 'Add Other': 'addOther', 'Not Sure': 'notSure'};
-const _hotTubSanitizers = {'Chlorine': 'chlorine', 'Bromine': 'bromine', 'Add Other': 'addOther', 'Not Sure': 'notSure'};
+const _hotTubSanitizers = {'Chlorine': 'chlorine', 'Bromine': 'bromine', 'Add Other': 'addOther'};
 const _hotTubUsage = {'Daily': 'daily', 'Weekly': 'weekly', 'Occasional': 'occasional'};
 
 class WaterSetupSection extends StatefulWidget {

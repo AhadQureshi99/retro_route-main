@@ -917,7 +917,16 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                               desc: 'PAYMENT',
                             ),
                             _featureItemWidget(
-                              widget: Text('🍁', style: TextStyle(fontSize: 24.sp)),
+                              widget: SizedBox(
+                                height: 24.sp,
+                                width: 24.sp,
+                                child: Center(
+                                  child: FittedBox(
+                                    fit: BoxFit.contain,
+                                    child: Text('🍁', style: TextStyle(fontSize: 24.sp, height: 1.0)),
+                                  ),
+                                ),
+                              ),
                               title: 'MADE IN',
                               desc: 'CANADA',
                             ),

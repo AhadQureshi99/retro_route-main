@@ -911,7 +911,16 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                   _featureItem(Icons.science_outlined, "FREE WATER", "TEST"),
                   _featureItem(Icons.payments_outlined, "INCREDIBLE", "VALUE"),
                   _featureItemWidget(
-                    Text('🍁', style: TextStyle(fontSize: 28.sp)),
+                    SizedBox(
+                      height: 28.sp,
+                      width: 28.sp,
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.contain,
+                          child: Text('🍁', style: TextStyle(fontSize: 28.sp, height: 1.0)),
+                        ),
+                      ),
+                    ),
                     "CANADIAN", "OWNED",
                   ),
                 ],
@@ -1000,7 +1009,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                             SizedBox(width: 10.w),
                             Expanded(
                               child: Text(
-                                feature.replaceAll(RegExp(r'<[^>]*>'), '').replaceAll('&nbsp;', ' ').replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&#39;', "'"),
+                                feature.replaceAll(RegExp(r'<[^>]*>'), '').replaceAll('&nbsp;', ' ').replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&#39;', "'").replaceAll('by Retro Route Co', 'by\nRetro Route Co'),
                                 style: GoogleFonts.inter(
                                   fontSize: 14.sp,
                                   color: const Color(0xff1f2937),

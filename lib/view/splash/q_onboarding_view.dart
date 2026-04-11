@@ -298,20 +298,53 @@ class _OnboardingState extends ConsumerState<QuestionOnboardingScreenOne> {
           _screen > 0
               ? GestureDetector(
                   onTap: _back,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: isHero
-                          ? AppColors.btnColor
-                          : AppColors.btnColor,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Icon(
-                      Icons.chevron_left_rounded,
-                      size: 24.sp,
-                      color: Colors.white ,
-                    ),
-                  ),
+                  child: _screen == 4
+                      ? Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFF8C00), Color(0xFFFF6B00)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(24.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFF6B00).withOpacity(0.35),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.refresh_rounded, color: Colors.white, size: 16.sp),
+                              SizedBox(width: 5.w),
+                              Text(
+                                'Start Over',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: AppColors.btnColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Icon(
+                            Icons.chevron_left_rounded,
+                            size: 24.sp,
+                            color: Colors.white,
+                          ),
+                        ),
                 )
               : SizedBox(width: 32.w),
           const Spacer(),

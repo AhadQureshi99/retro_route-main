@@ -128,8 +128,37 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
       }
     }
 
+    // Pre-load saved delivery date if editing
+    if (widget.addressToEdit != null) {
+      _loadSavedDeliveryDate();
+    }
+
     // Eagerly grab current GPS for fraud prevention
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetchCurrentLocation());
+  }
+
+  Future<void> _loadSavedDeliveryDate() async {
+    final address = widget.addressToEdit!;
+    DateTime? savedDate;
+
+    // First try per-address date from SharedPreferences
+    if (address.id != null) {
+      savedDate = await loadAddressDeliveryDate(address.id!);
+    }
+
+    // Fallback to outOfZoneDate from the address model
+    savedDate ??= address.outOfZoneDate;
+
+    if (savedDate != null && mounted) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      if (!savedDate.isBefore(today)) {
+        setState(() {
+          _customDate = savedDate;
+          _useCustomDate = true;
+        });
+      }
+    }
   }
 
   Future<void> _fetchCurrentLocation() async {
