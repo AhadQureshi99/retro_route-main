@@ -239,7 +239,7 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat("dd MMM yyyy • hh:mm a");
+    final dateFormat = DateFormat("dd MMM yyyy");
     final statusColor = _getStatusColor(order.deliveryStatus);
 
     return GestureDetector(
@@ -270,42 +270,30 @@ class _OrderCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: AppColors.black,
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      customText(
-                        text: "Delivery",
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      SizedBox(height: 2.h),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.10),
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
-                        child: customText(
-                          text: order.deliveryStatus,
-                          fontSize: 13,
-                          color: statusColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  customText(
+                    text: "Delivery",
+                    fontSize: 14,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
                   ),
                 ],
               ),
-              verticalSpacer(height: 8),
-              customText(
-                text: dateFormat.format(order.createdAt.toLocal()),
-                fontSize: 14,
-                color: Colors.black,
-                fontWeight: FontWeight.w500,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  customText(
+                    text: dateFormat.format(order.createdAt.toLocal()),
+                    fontSize: 14,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  customText(
+                    text: order.deliveryStatus,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: statusColor,
+                  ),
+                ],
               ),
               verticalSpacer(height: 12),
               Row(

@@ -219,7 +219,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
             _profileTile(
               icon: Icons.edit_outlined,
               title: "Edit Profile",
-              subtitle: "Update your name, email & photo",
+              subtitle: "Update your name and email",
               onTap: () => goRouter.push(AppRoutes.editProfle),
             ).animate().slideX(
                 begin: -0.4,

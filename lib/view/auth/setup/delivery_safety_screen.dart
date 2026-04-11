@@ -17,7 +17,7 @@ const _dropOffOptions = [
   'Beside the pool',
   'Beside the hot tub',
   'Inside shed',
-  'Front door / porch',
+  'Front door',
   'By the gate',
   'Other',
 ];
@@ -338,7 +338,8 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
         _showSnack('Please select how we get in.');
         return false;
       }
-      if (data.gateEntry.gateLocation.trim().isEmpty) {
+      if (data.gateEntry.accessMethod != 'noGate' &&
+          data.gateEntry.gateLocation.trim().isEmpty) {
         setState(() => _validationError = 'gate');
         _showSnack('Please select gate location.');
         return false;
@@ -775,6 +776,8 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
                       selected: d.dogSafety.dogsContained == 'no',
                       onTap: () => _update(
                         (s) => s.copyWith(
+                          backyardAccess: 'no',
+                          dropOffSpot: 'Front door',
                           dogSafety: s.dogSafety.copyWith(dogsContained: 'no'),
                         ),
                       ),
@@ -784,6 +787,8 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
                       selected: d.dogSafety.dogsContained == 'notSure',
                       onTap: () => _update(
                         (s) => s.copyWith(
+                          backyardAccess: 'no',
+                          dropOffSpot: 'Front door',
                           dogSafety: s.dogSafety.copyWith(
                             dogsContained: 'notSure',
                           ),

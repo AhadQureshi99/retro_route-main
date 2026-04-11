@@ -461,7 +461,7 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
                 'Beside the pool',
                 'Beside the hot tub',
                 'Inside shed',
-                'Front door / porch',
+                'Front door',
                 'By the gate',
                 'Other',
               ]
@@ -740,6 +740,8 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
                     label: "No",
                     selected: d.dogSafety.dogsContained == 'no',
                     onTap: () => _update(d.copyWith(
+                        backyardAccess: 'no',
+                        dropOffSpot: 'Front door',
                         dogSafety:
                             d.dogSafety.copyWith(dogsContained: 'no'))),
                     activeColor: Colors.grey,
@@ -748,6 +750,8 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
                     label: "Not sure",
                     selected: d.dogSafety.dogsContained == 'notSure',
                     onTap: () => _update(d.copyWith(
+                        backyardAccess: 'no',
+                        dropOffSpot: 'Front door',
                         dogSafety:
                             d.dogSafety.copyWith(dogsContained: 'notSure'))),
                     activeColor: Colors.grey,

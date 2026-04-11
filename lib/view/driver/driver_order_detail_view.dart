@@ -584,11 +584,16 @@ class _DriverOrderDetailScreenState
                           'Subtotal',
                           '\$${delivery.subtotal?.toStringAsFixed(2) ?? '0.00'}',
                         ),
-                        if ((delivery.waterTestDiscount ?? 0) > 0)
+                        if ((delivery.waterTestDiscount ?? 0) > 0) ...[
                           _buildPriceRow(
                             'Water test credit',
                             '− \$${delivery.waterTestDiscount!.toStringAsFixed(2)}',
                           ),
+                          _buildPriceRow(
+                            'Subtotal after credit',
+                            '\$${((delivery.subtotal ?? 0) - delivery.waterTestDiscount!).toStringAsFixed(2)}',
+                          ),
+                        ],
                         _buildPriceRow(
                           'Delivery Charges',
                           '\$${delivery.deliveryCharges?.toStringAsFixed(2) ?? '0.00'}',
