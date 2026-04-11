@@ -38,6 +38,10 @@ class AddressRepo {
     required String? fullName,
     Map<String, double>? currentLoc,
     Map<String, double>? deliveryLoc,
+    String? deliveryZone,
+    String? deliveryDay,
+    bool? isOutOfZone,
+    DateTime? outOfZoneDate,
   }) async {
     try {
       final body = <String, dynamic>{
@@ -51,6 +55,10 @@ class AddressRepo {
       };
       if (currentLoc != null) body['currentLoc'] = currentLoc;
       if (deliveryLoc != null) body['deliveryLoc'] = deliveryLoc;
+      if (deliveryZone != null) body['deliveryZone'] = deliveryZone;
+      if (deliveryDay != null) body['deliveryDay'] = deliveryDay;
+      if (isOutOfZone != null) body['isOutOfZone'] = isOutOfZone;
+      if (outOfZoneDate != null) body['outOfZoneDate'] = outOfZoneDate.toIso8601String();
       final response = await _apiServices.postApi(body, AppUrls.addAddress, token);
       log('Response from address: $response');
     } catch (e) {
@@ -71,6 +79,10 @@ class AddressRepo {
     required String fullname,
     Map<String, double>? currentLoc,
     Map<String, double>? deliveryLoc,
+    String? deliveryZone,
+    String? deliveryDay,
+    bool? isOutOfZone,
+    DateTime? outOfZoneDate,
   }) async {
     try {
       final body = <String, dynamic>{
@@ -84,6 +96,10 @@ class AddressRepo {
       };
       if (currentLoc != null) body['currentLoc'] = currentLoc;
       if (deliveryLoc != null) body['deliveryLoc'] = deliveryLoc;
+      if (deliveryZone != null) body['deliveryZone'] = deliveryZone;
+      if (deliveryDay != null) body['deliveryDay'] = deliveryDay;
+      if (isOutOfZone != null) body['isOutOfZone'] = isOutOfZone;
+      if (outOfZoneDate != null) body['outOfZoneDate'] = outOfZoneDate.toIso8601String();
       final response = await _apiServices.patchApi(
         body, '${AppUrls.updateAddress}/$addressId', token);
       log('Response from address: $response');

@@ -48,10 +48,15 @@ class DriverRepo {
   }
 
   /// Fetch driver stats
-  Future<DriverStatsResponse> fetchDriverStats({required String token}) async {
+  Future<DriverStatsResponse> fetchDriverStats({required String token, DateTime? dateFilter}) async {
     try {
-      log("Fetching driver stats from: ${AppUrls.getDriverStats}");
-      final response = await _apiServices.getApi(AppUrls.getDriverStats, token);
+      String url = AppUrls.getDriverStats;
+      if (dateFilter != null) {
+        final dateStr = dateFilter.toIso8601String().split('T').first;
+        url = '$url?date=$dateStr';
+      }
+      log("Fetching driver stats from: $url");
+      final response = await _apiServices.getApi(url, token);
 
       log("Raw stats response: $response");
 

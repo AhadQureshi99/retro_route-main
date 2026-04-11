@@ -13,6 +13,7 @@ import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
 import 'package:retro_route/utils/auth_helper.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
+import 'package:retro_route/view_model/bottom_nav_view_model.dart';
 import 'package:retro_route/view_model/cart_view_model/cart_view_model.dart';
 import 'package:retro_route/view_model/favourite_view_model/favourite_view_model.dart';
 
@@ -50,6 +51,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       
         automaticallyImplyLeading: false,
+        leading: GestureDetector(
+          onTap: () {
+            ref.read(cartProvider.notifier).clear();
+            goRouter.go('${AppRoutes.onboarding}?screen=3');
+          },
+          child: Container(
+            margin: EdgeInsets.only(left: 10.w, top: 8.h, bottom: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF8C00), Color(0xFFFF6B00)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24.r),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF6B00).withOpacity(0.35),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.refresh_rounded, color: Colors.white, size: 16.sp),
+                SizedBox(width: 5.w),
+                Text(
+                  'Start Over',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        leadingWidth: 130.w,
         title: Row(
           children: [
             Image.asset(
@@ -348,7 +391,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           _profileTile(
             icon: Icons.favorite_border,
-            title: "My Wishlist",
+            title: "My Favourites",
             onTap: () => goRouter.push(AppRoutes.favourite),
           ).animate().slideX(
             begin: -0.4,
@@ -486,6 +529,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showSettingsSheet(BuildContext context, WidgetRef ref) {
+    ref.read(settingsSheetOpenProvider.notifier).state = true;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -558,7 +602,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      ref.read(settingsSheetOpenProvider.notifier).state = false;
+    });
   }
 
   void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {

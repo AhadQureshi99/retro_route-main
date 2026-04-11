@@ -65,7 +65,7 @@ WtStatus getWtStatus(String param, double? value, {String poolType = 'hottub', S
   // N/A rules — field doesn't apply at all
   if (param == 'bromine' && sanitizer != 'bromine') return WtStatus.na;
   if (param == 'freeChlorine' && sanitizer == 'bromine') return WtStatus.na;
-  if (param == 'cyanuricAcid' && poolType == 'hottub') return WtStatus.na;
+  if (param == 'cyanuricAcid' && poolType == 'hottub') return WtStatus.na; // show for pool & both
   if (param == 'salt' && sanitizer != 'salt') return WtStatus.na;
   if (param == 'biguanide' && sanitizer != 'biguanide') return WtStatus.na;
   if (param == 'biguanideShock' && sanitizer != 'biguanide') return WtStatus.na;
@@ -73,7 +73,7 @@ WtStatus getWtStatus(String param, double? value, {String poolType = 'hottub', S
   // No value entered yet but field is applicable
   if (value == null) return WtStatus.pending;
 
-  final ranges = poolType == 'hottub' ? WaterTestRanges.hotTub : WaterTestRanges.pool;
+  final ranges = poolType == 'hottub' ? WaterTestRanges.hotTub : WaterTestRanges.pool; // 'both' uses pool ranges
   final range = ranges[param];
   if (range == null) return WtStatus.pending;
   if (value < range['min']!) return WtStatus.low;
@@ -198,11 +198,17 @@ class AutoCrateLogic {
   }) {
     final List<Map<String, dynamic>> crate = [];
 
+    // For 'both', determine which rules to use based on volume
+    // Hot tub volumes are ≤2500L, pool volumes are ≥15000L
+    final effectiveType = poolType == 'both'
+        ? (volume != null && volume <= 5000 ? 'hottub' : 'pool')
+        : poolType;
+
     // Smart sizing: Small/Medium vs Large/XL per blueprint
-    final bool isLarge = poolType == 'hottub'
+    final bool isLarge = effectiveType == 'hottub'
         ? (volume != null && volume >= 1800)
         : (volume != null && volume >= 60000);
-    final bool isXL = poolType != 'hottub'
+    final bool isXL = effectiveType != 'hottub'
         && volume != null && volume >= 80000;
 
     double? pH = results['pH'];
@@ -217,7 +223,7 @@ class AutoCrateLogic {
     double? cya = results['cyanuricAcid'];
     double? salt = results['salt'];
 
-    if (poolType == 'hottub') {
+    if (effectiveType == 'hottub') {
       // ── HOT TUB RULES ──
 
       // pH

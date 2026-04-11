@@ -1,7 +1,7 @@
 class WaterTestResult {
   final String orderId;
   final String customerId;
-  final String poolType; // 'hottub' | 'pool'
+  final String poolType; // 'hottub' | 'pool' | 'both'
   final String sanitizerType; // 'chlorine' | 'bromine' | 'salt' | 'biguanide'
   final double? volume; // liters
   final DateTime testedAt;

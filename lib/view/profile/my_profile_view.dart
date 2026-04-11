@@ -36,12 +36,11 @@ const _contactLabels = {
   'emailNotification': 'Email/App notification',
   'textMe': 'Text me',
   'callMe': 'Call me',
-  'onlyIfNecessary': 'Only if necessary',
 };
 const _waterTypeLabels = {
   'pool': 'Pool',
-  'hotTub': 'Hot tub',
-  'both': 'Pool + Hot tub',
+  'hotTub': 'Hot Tub',
+  'both': 'Pool + Hot Tub',
   'notRightNow': 'Not set up yet',
 };
 const _sanitizerLabels = {
@@ -257,8 +256,8 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
   Widget _buildDeliveryCard(SetupProfileData? setup) {
     final ds = setup?.deliverySafety;
-    // Check if delivery data actually exists rather than relying only on hasCompletedSetup
-    final configured = ds != null && ds.address.isNotEmpty;
+    // Check if delivery data actually exists
+    final configured = ds != null && (ds.address.isNotEmpty || ds.backyardAccess.isNotEmpty || ds.dogSafety.hasDogs);
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 6.h),
@@ -415,8 +414,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
   Widget _deliverySummary(DeliverySafety ds) {
     return Column(
       children: [
-        _infoRow("Address", ds.address),
-        _infoRow("Label", ds.addressLabel),
+        // Address & label hidden — managed via My Addresses
         _infoRow("Drop-off spot", ds.dropOffSpot),
         if (ds.dropOffDetails.isNotEmpty)
           _infoRow("Drop-off details", ds.dropOffDetails),
@@ -642,7 +640,9 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                     fontWeight: FontWeight.w800,
                     color: AppColors.primary)),
           ),
-          if (ws.pool.estimatedVolume > 0)
+          if (ws.pool.volumeMethod == 'notSure')
+            _infoRow("Volume", "Not sure — will be calculated on first visit"),
+          if (ws.pool.estimatedVolume > 0 && ws.pool.volumeMethod != 'notSure')
             _infoRow(
                 "Volume",
                 ws.pool.volumeUnit == 'liters'
@@ -676,12 +676,14 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
             _infoRow("Key location", ws.hotTub.coverKeyLocation),
           _infoRow(
             "Volume",
-            ws.hotTub.customVolume.isNotEmpty
-                ? ws.hotTub.customVolume
-                : ws.hotTub.volume.isNotEmpty &&
-                        ws.hotTub.volume != 'addOther'
-                    ? "${ws.hotTub.volume} ${ws.pool.volumeUnit == 'liters' ? 'L' : 'gal'}"
-                    : null,
+            ws.hotTub.volume == 'notSure'
+                ? "Not sure \u2014 will be calculated on first visit"
+                : ws.hotTub.customVolume.isNotEmpty
+                    ? ws.hotTub.customVolume
+                    : ws.hotTub.volume.isNotEmpty &&
+                            ws.hotTub.volume != 'addOther'
+                        ? "${ws.hotTub.volume} ${ws.pool.volumeUnit == 'liters' ? 'L' : 'gal'}"
+                        : null,
           ),
           _infoRow("Sanitizer",
               ws.hotTub.sanitizerSystem == 'addOther' && ws.hotTub.customSanitizer.isNotEmpty
@@ -689,7 +691,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                   : _sanitizerLabels[ws.hotTub.sanitizerSystem]),
           _infoRow("Usage", _usageLabels[ws.hotTub.usage]),
           if (ws.hotTub.filterModel.isNotEmpty)
-            _infoRow("Filter model", ws.hotTub.filterModel),
+            _infoRow("Filter Details", ws.hotTub.filterModel),
         ],
         SizedBox(height: 12.h),
         GestureDetector(

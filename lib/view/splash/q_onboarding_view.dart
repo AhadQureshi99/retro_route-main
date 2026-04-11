@@ -121,8 +121,8 @@ class _OnboardingState extends ConsumerState<QuestionOnboardingScreenOne> {
     }
   }
 
-  /// Creates a server-side address from onboarding data and selects it + the
-  /// delivery date so checkout can pick them up.
+  /// Creates or updates the server-side address from onboarding data and
+  /// selects it + the delivery date so checkout can pick them up.
   Future<void> _createAndSelectAddress() async {
     if (_routeInfo == null) return;
     final token = ref.read(authNotifierProvider).value?.data?.token;
@@ -132,22 +132,51 @@ class _OnboardingState extends ConsumerState<QuestionOnboardingScreenOne> {
     final city = _routeInfo!['city'] as String? ?? '';
     final postal = _routeInfo!['postal'] as String? ?? '';
     final nextDate = _routeInfo!['nextDate'] as DateTime?;
+    final zone = _routeInfo!['zone'] as DeliveryZone?;
     final user = ref.read(authNotifierProvider).value?.data?.user;
 
     // Only create if we have at least a city
     if (city.isEmpty) return;
 
     try {
-      final success = await ref.read(addressProvider.notifier).addAddress(
-            token: token,
-            addressLine: street,
-            city: city,
-            statess: 'ON',
-            country: 'CA',
-            postalCode: postal,
-            phone: user?.phone ?? '',
-            fullName: user?.name ?? '',
-          );
+      // Always fetch addresses first so we know if one already exists
+      await ref.read(addressProvider.notifier).fetchAddresses(token);
+      final existingAddresses = ref.read(addressProvider).addresses;
+      bool success;
+
+      if (existingAddresses.isNotEmpty) {
+        // Update the first (most recent) existing address
+        final existingId = existingAddresses.first.safeId;
+        success = await ref.read(addressProvider.notifier).updateAddress(
+              token: token,
+              addressId: existingId,
+              addressLine: street,
+              city: city,
+              statess: 'ON',
+              country: 'CA',
+              postalCode: postal,
+              phone: user?.phone ?? '',
+              fullName: user?.name ?? '',
+              deliveryZone: zone?.name,
+              deliveryDay: zone?.deliveryDay,
+              outOfZoneDate: nextDate,
+            );
+      } else {
+        // No existing address — create a new one
+        success = await ref.read(addressProvider.notifier).addAddress(
+              token: token,
+              addressLine: street,
+              city: city,
+              statess: 'ON',
+              country: 'CA',
+              postalCode: postal,
+              phone: user?.phone ?? '',
+              fullName: user?.name ?? '',
+              deliveryZone: zone?.name,
+              deliveryDay: zone?.deliveryDay,
+              outOfZoneDate: nextDate,
+            );
+      }
 
       if (success) {
         final addresses = ref.read(addressProvider).addresses;
@@ -158,7 +187,7 @@ class _OnboardingState extends ConsumerState<QuestionOnboardingScreenOne> {
         }
       }
     } catch (e) {
-      debugPrint('[Onboarding] Failed to create address: $e');
+      debugPrint('[Onboarding] Failed to save address: $e');
     }
 
     // Set the delivery date provider

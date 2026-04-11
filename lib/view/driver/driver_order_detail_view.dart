@@ -344,6 +344,42 @@ class _DriverOrderDetailScreenState
                     ),
                   ),
 
+                  // Drop-off info shown prominently above the expandable section
+                  if (delivery.userId?.deliverySafety != null &&
+                      ((delivery.userId!.deliverySafety!.dropOffSpot?.trim().isNotEmpty == true) ||
+                       (delivery.userId!.deliverySafety!.dropOffDetails?.trim().isNotEmpty == true))) ...[
+                    verticalSpacer(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: Colors.orange.withOpacity(0.4)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.place, color: Colors.orange, size: 20.sp),
+                              SizedBox(width: 8.w),
+                              customText(
+                                text: 'Drop-off Info',
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange.shade800,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12.h),
+                          _buildCompactInfoRow('Drop-off Spot', delivery.userId!.deliverySafety!.dropOffSpot, highlightColor: Colors.orange),
+                          _buildCompactInfoRow('Drop-off Details', delivery.userId!.deliverySafety!.dropOffDetails, highlightColor: Colors.orange),
+                        ],
+                      ),
+                    ),
+                  ],
+
                   if (delivery.userId?.deliverySafety != null ||
                       delivery.userId?.waterSetup != null ||
                       delivery.userId?.onboardingData != null) ...[
@@ -970,8 +1006,6 @@ class _DriverOrderDetailScreenState
           title: 'Delivery Safety',
           icon: Icons.shield_outlined,
           children: [
-            _buildCompactInfoRow('Drop-off Spot', safety.dropOffSpot),
-            _buildCompactInfoRow('Drop-off Details', safety.dropOffDetails),
             _buildCompactInfoRow('Address Label', safety.addressLabel),
             _buildCompactInfoRow(
               'Backyard Access',
@@ -1064,7 +1098,9 @@ class _DriverOrderDetailScreenState
         waterRows.addAll([
           _buildCompactInfoRow(
             'Pool Volume Method',
-            _formatEnumValue(water.pool.volumeMethod),
+            water.pool.volumeMethod == 'notSure'
+                ? 'Not Sure — needs calculation on visit'
+                : _formatEnumValue(water.pool.volumeMethod),
           ),
           _buildCompactInfoRow('Pool Shape', _formatEnumValue(water.pool.shape)),
           if (water.pool.length > 0)
@@ -1087,7 +1123,10 @@ class _DriverOrderDetailScreenState
 
       if (water.waterType == 'hotTub' || water.waterType == 'both') {
         waterRows.addAll([
-          _buildCompactInfoRow('Hot Tub Volume', water.hotTub.volume),
+          _buildCompactInfoRow('Hot Tub Volume',
+              water.hotTub.volume == 'notSure'
+                  ? 'Not Sure — needs calculation on visit'
+                  : water.hotTub.volume),
           _buildCompactInfoRow('Hot Tub Custom Volume', water.hotTub.customVolume),
           _buildCompactInfoRow(
             'Hot Tub Sanitizer',
@@ -1204,9 +1243,12 @@ class _DriverOrderDetailScreenState
     );
   }
 
-  Widget _buildCompactInfoRow(String label, String? value) {
+  Widget _buildCompactInfoRow(String label, String? value, {Color? highlightColor}) {
     final cleaned = value?.trim() ?? '';
     if (cleaned.isEmpty) return const SizedBox.shrink();
+
+    final bgColor = highlightColor?.withOpacity(0.15) ?? AppColors.primary.withOpacity(0.08);
+    final labelColor = highlightColor?.withOpacity(0.85) ?? AppColors.primary.withOpacity(0.75);
 
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
@@ -1214,7 +1256,7 @@ class _DriverOrderDetailScreenState
         width: double.infinity,
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.08),
+          color: bgColor,
           borderRadius: BorderRadius.circular(8.r),
         ),
         child: Column(
@@ -1224,7 +1266,7 @@ class _DriverOrderDetailScreenState
               text: label,
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.primary.withOpacity(0.75),
+              color: labelColor,
             ),
             verticalSpacer(height: 4),
             customText(

@@ -17,12 +17,13 @@ class AppShell extends ConsumerWidget {
     final selectedIndex = ref.watch(bottomNavProvider);
     final cartItemCount = ref.watch(cartProvider).itemCount;
     final isProcessingPayment = ref.watch(paymentProcessingProvider);
+    final isSettingsSheetOpen = ref.watch(settingsSheetOpenProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bgColor,
       body: child,
       bottomNavigationBar: IgnorePointer(
-        ignoring: isProcessingPayment,
+        ignoring: isProcessingPayment || isSettingsSheetOpen,
         child: SafeArea(
         child: CurvedNavigationBar(
           index: selectedIndex,
@@ -33,6 +34,8 @@ class AppShell extends ConsumerWidget {
           animationCurve: Curves.easeInOut,
           height: 50,
           onTap: (index) {
+            // Close any open dialogs/popups before navigating
+            Navigator.of(context, rootNavigator: true).popUntil((route) => route is! DialogRoute && route is! PopupRoute);
             ref.read(bottomNavProvider.notifier).state = index;
             persistBottomNavIndex(index);
             context.go(AppRoutes.host);

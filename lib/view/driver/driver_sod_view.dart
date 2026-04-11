@@ -66,6 +66,8 @@ class _DriverSodScreenState extends ConsumerState<DriverSodScreen> {
         double.tryParse(_readingCtrl.text.trim()) ?? 0,
       );
       await prefs.setString('sod_image', _odometerImage!.path);
+      // Clear EOD flag so stats resume for the new work cycle
+      await prefs.remove('eod_submitted_date');
 
       ref.read(sodCompletedProvider.notifier).state = true;
 

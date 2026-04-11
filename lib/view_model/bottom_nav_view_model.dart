@@ -9,6 +9,7 @@ final bottomNavProvider = StateProvider<int>((ref) => 0);
 
 /// When true, the bottom nav bar is disabled (e.g. during payment processing).
 final paymentProcessingProvider = StateProvider<bool>((ref) => false);
+final settingsSheetOpenProvider = StateProvider<bool>((ref) => false);
 
 Future<void> persistBottomNavIndex(int index) async {
   final prefs = await SharedPreferences.getInstance();

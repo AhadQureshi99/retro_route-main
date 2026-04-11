@@ -121,8 +121,7 @@ class DriverDeliveriesState {
     return sorted;
   }
 
-  // Get filtered deliveries based on date, sorted by nearest
-  // "On My Way" deliveries always appear first
+  // Get filtered deliveries based on date, sorted by distance from driver
   List<DriverDelivery> get filteredActiveDeliveries {
     List<DriverDelivery> list;
     if (dateFilter == null) {
@@ -133,12 +132,31 @@ class DriverDeliveriesState {
         return _isSameDay(d.scheduledDeliveryDate!, dateFilter!);
       }).toList();
     }
-    // Split into On My Way and others
-    final onMyWay = list.where((d) =>
-        d.deliveryStatus?.toLowerCase() == 'on my way').toList();
-    final others = list.where((d) =>
-        d.deliveryStatus?.toLowerCase() != 'on my way').toList();
-    return [..._sortByNearest(onMyWay), ..._sortByNearest(others)];
+    // Sort all active deliveries by distance from driver (nearest first)
+    return _sortByDistanceFromDriver(list);
+  }
+
+  /// Sort deliveries by straight-line distance from driver's current position.
+  List<DriverDelivery> _sortByDistanceFromDriver(List<DriverDelivery> list) {
+    if (driverLat == null || driverLon == null) return list;
+    if (list.isEmpty) return list;
+
+    final sorted = List<DriverDelivery>.from(list);
+    sorted.sort((a, b) {
+      final aLat = a.deliveryAddress?.deliveryLat;
+      final aLon = a.deliveryAddress?.deliveryLon;
+      final bLat = b.deliveryAddress?.deliveryLat;
+      final bLon = b.deliveryAddress?.deliveryLon;
+
+      // Deliveries without coordinates go to the end
+      if (aLat == null || aLon == null) return 1;
+      if (bLat == null || bLon == null) return -1;
+
+      final distA = _haversine(driverLat!, driverLon!, aLat, aLon);
+      final distB = _haversine(driverLat!, driverLon!, bLat, bLon);
+      return distA.compareTo(distB);
+    });
+    return sorted;
   }
 
   List<DriverDelivery> get filteredCompletedDeliveries {
@@ -249,11 +267,16 @@ class DriverDeliveriesNotifier extends Notifier<DriverDeliveriesState> {
       final repo = ref.read(driverRepoProvider);
 
       // Fetch all data in parallel
+      // Active deliveries (Pending/On My Way) fetched WITHOUT date filter
+      // so driver sees ALL assigned orders regardless of scheduled date.
+      // Completed fetched without date filter so all delivered orders show.
+      // Stats filtered to today only for the summary cards.
+      final today = DateTime.now();
       final results = await Future.wait([
         repo.fetchMyDeliveries(token: token, status: 'Pending'),
         repo.fetchMyDeliveries(token: token, status: 'On My Way'),
         repo.fetchMyDeliveries(token: token, status: 'Delivered'),
-        repo.fetchDriverStats(token: token),
+        repo.fetchDriverStats(token: token, dateFilter: today),
       ]);
 
       final pendingResponse = results[0] as DriverDeliveriesResponse;
@@ -430,6 +453,11 @@ class DriverDeliveriesNotifier extends Notifier<DriverDeliveriesState> {
   /// Clear water test and crate state
   void clearWaterTest() {
     state = state.copyWith(clearWaterTest: true, generatedCrate: []);
+  }
+
+  /// Reset all driver state (used on EOD/logout)
+  void reset() {
+    state = DriverDeliveriesState();
   }
 
   /// Submit end of day report

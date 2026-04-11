@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:retro_route/model/driver_delivery_model.dart';
 import 'package:retro_route/model/water_test_result_model.dart';
 import 'package:retro_route/utils/driver_constants.dart';
 import 'package:retro_route/utils/app_routes.dart';
@@ -27,6 +28,7 @@ class _DriverEodScreenState extends ConsumerState<DriverEodScreen> {
   final _notes = TextEditingController();
   bool _submitted = false;
   bool _submitting = false;
+  bool _eodSubmittedToday = false;
   double _sodReading = 0;
   File? _eodOdometerImage;
   File? _sodOdometerImage;
@@ -41,6 +43,7 @@ class _DriverEodScreenState extends ConsumerState<DriverEodScreen> {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().substring(0, 10);
     final sodDate = prefs.getString('sod_date') ?? '';
+    final eodDate = prefs.getString('eod_submitted_date') ?? '';
     if (sodDate == today) {
       _sodReading = prefs.getDouble('sod_reading') ?? 0;
       final sodImagePath = prefs.getString('sod_image');
@@ -48,7 +51,9 @@ class _DriverEodScreenState extends ConsumerState<DriverEodScreen> {
         _sodOdometerImage = File(sodImagePath);
       }
     }
-    if (mounted) setState(() {});
+    if (mounted) setState(() {
+      _eodSubmittedToday = eodDate == today;
+    });
   }
 
   void _calculateKm() {
@@ -101,10 +106,11 @@ class _DriverEodScreenState extends ConsumerState<DriverEodScreen> {
     final token = ref.read(authNotifierProvider).value?.data?.token ?? '';
     final driverId = ref.read(authNotifierProvider).value?.data?.user.id ?? '';
 
-    final delivered = driverState.completedDeliveries.length;
+    final todayDelivered = _todayCompleted(driverState.completedDeliveries);
+    final delivered = todayDelivered.length;
     final pending = driverState.activeDeliveries.length;
     final totalStops = delivered + pending;
-    final totalRevenue = driverState.completedDeliveries
+    final totalRevenue = todayDelivered
         .fold<double>(0, (s, d) => s + d.safeTotal);
 
     final report = EodReport(
@@ -136,12 +142,18 @@ class _DriverEodScreenState extends ConsumerState<DriverEodScreen> {
       if (ok) _submitted = true;
     });
 
-    // After successful submission: clear SOD, logout, go to login
+    // After successful submission: clear SOD, reset state, logout, go to login
     if (ok && mounted) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('sod_date');
       await prefs.remove('sod_reading');
       await prefs.remove('sod_image');
+      // Mark EOD as submitted for today so stats show 0 until next SOD
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      await prefs.setString('eod_submitted_date', todayStr);
+
+      // Reset driver state so stats show 0 on next login
+      ref.read(driverDeliveriesProvider.notifier).reset();
 
       // Brief delay so driver sees the success message
       await Future.delayed(const Duration(seconds: 2));
@@ -162,13 +174,29 @@ class _DriverEodScreenState extends ConsumerState<DriverEodScreen> {
     super.dispose();
   }
 
+  /// Filter deliveries to only those delivered today.
+  List<DriverDelivery> _todayCompleted(List<DriverDelivery> all) {
+    final now = DateTime.now();
+    return all.where((d) {
+      final dt = d.deliveredAt ?? d.updatedAt;
+      if (dt == null) return false;
+      return dt.year == now.year && dt.month == now.month && dt.day == now.day;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final driverState = ref.watch(driverDeliveriesProvider);
-    final delivered = driverState.completedDeliveries.length;
-    final totalStops =
-        delivered + driverState.activeDeliveries.length;
-    final revenue = driverState.completedDeliveries
+
+    // If EOD already submitted today, show zeros
+    final todayDelivered = _eodSubmittedToday
+        ? <DriverDelivery>[]
+        : _todayCompleted(driverState.completedDeliveries);
+    final delivered = todayDelivered.length;
+    final totalStops = _eodSubmittedToday
+        ? 0
+        : delivered + driverState.activeDeliveries.length;
+    final revenue = todayDelivered
         .fold<double>(0, (s, d) => s + d.safeTotal);
 
     return Scaffold(

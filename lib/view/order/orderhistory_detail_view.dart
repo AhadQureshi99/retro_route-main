@@ -71,6 +71,20 @@ class OrderDetailsScreen extends StatelessWidget {
                     fontSize: 14,
                     color: Colors.black, fontWeight: FontWeight.w500,
                   ),
+                ] else if (order.addressSnapshot != null &&
+                    (order.addressSnapshot!['addressLine'] ?? '').toString().isNotEmpty) ...[
+                  customText(
+                    text: order.addressSnapshot!['addressLine']?.toString() ?? '',
+                    fontSize: 15,
+                    maxLine: 3, fontWeight: FontWeight.w500, color: AppColors.black,
+                  ),
+                  verticalSpacer(height: 4),
+                  customText(
+                    text:
+                        "${order.addressSnapshot!['city'] ?? ''}, ${order.addressSnapshot!['state'] ?? ''}, ${order.addressSnapshot!['country'] ?? ''}",
+                    fontSize: 14,
+                    color: Colors.black, fontWeight: FontWeight.w500,
+                  ),
                 ] else
                   customText(text: "No address info", color: Colors.black, fontWeight: FontWeight.w500,
                    fontSize: 16),

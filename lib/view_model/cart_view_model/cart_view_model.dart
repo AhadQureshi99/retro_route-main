@@ -56,12 +56,28 @@ class CartNotifier extends Notifier<CartState> {
     return CartState(); // initial empty cart, then hydrate from storage
   }
 
+  /// Returns the max available stock for a product (0 if out of stock).
+  int maxStock(Product product) {
+    return product.stock ?? 0;
+  }
+
   void add(Product product, {int quantity = 1, String? selectedSize}) {
+    final stock = maxStock(product);
+    if (stock <= 0) return; // out of stock — do nothing
+
+    // Cap quantity so existing + new doesn't exceed stock
+    final existing = state.items.where(
+      (item) => item.product.id == product.id && (item.selectedSize ?? '') == (selectedSize ?? ''),
+    );
+    final currentQty = existing.isNotEmpty ? existing.first.quantity : 0;
+    final cappedQty = (currentQty + quantity).clamp(1, stock) - currentQty;
+    if (cappedQty <= 0) return; // already at max stock
+
     state = state.copyWith(
       items: _addOrUpdateItem(
         state.items,
         product,
-        quantity,
+        cappedQty,
         selectedSize: selectedSize,
       ),
     );
@@ -75,11 +91,14 @@ class CartNotifier extends Notifier<CartState> {
       return;
     }
 
+    final stock = maxStock(product);
+    final capped = stock > 0 ? newQuantity.clamp(1, stock) : newQuantity;
+
     state = state.copyWith(
       items: _addOrUpdateItem(
         state.items,
         product,
-        newQuantity,
+        capped,
         selectedSize: selectedSize,
         replace: true,
       ),

@@ -29,8 +29,12 @@ class ProductCard extends ConsumerWidget {
     final hasDiscount = (product.discount ?? 0) > 0;
     final originalPrice = product.price ?? 0;
     final discounted = product.discountedPrice;
+    final isOutOfStock = (product.status ?? '') == 'Out of Stock' || (product.stock ?? 0) <= 0;
+    final isLowStock = (product.status ?? '') == 'Low Stock';
     final brandOrCategory =
-        (product.brand?.isNotEmpty == true ? product.brand : null) ??
+        (product.category?.isSubcategory == true
+            ? product.category?.parentCategoryName
+            : null) ??
             product.category?.safeName;
 
     return GestureDetector(
@@ -163,6 +167,57 @@ class ProductCard extends ConsumerWidget {
                     ),
                   ),
                 ),
+
+                // Out of stock overlay
+                if (isOutOfStock)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                      child: Center(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDC2626),
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                          child: Text(
+                            'OUT OF STOCK',
+                            style: GoogleFonts.inter(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // Low stock badge
+                if (isLowStock && !isOutOfStock)
+                  Positioned(
+                    bottom: 6.h,
+                    left: 6.w,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Text(
+                        'LOW STOCK',
+                        style: GoogleFonts.inter(
+                          fontSize: 8.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
 

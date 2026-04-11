@@ -393,6 +393,103 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
                 );
               }),
 
+              // Current approved items (full list)
+              if (approvedItems.isNotEmpty)
+                Container(
+                  padding: EdgeInsets.all(12.w),
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  decoration: BoxDecoration(
+                      color: DriverColors.greenLight,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: DriverColors.green.withOpacity(0.3))),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Icon(Icons.inventory_2_outlined,
+                            color: DriverColors.green, size: 18.sp),
+                        SizedBox(width: 8.w),
+                        Text(
+                            'CURRENT ORDER ITEMS (${approvedItems.length})',
+                            style: GoogleFonts.inter(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w700,
+                                color: DriverColors.green,
+                                letterSpacing: 0.8)),
+                      ]),
+                      SizedBox(height: 8.h),
+                      ...approvedItems.map((item) {
+                        final name = item['name'] ?? '';
+                        final sku = item['sku'] ?? '';
+                        final qty = (item['qty'] as num?)?.toInt() ?? 1;
+                        final price = (item['price'] as num?)?.toDouble() ?? 0;
+                        final size = item['size'] ?? '';
+                        final reason = item['reason'] ?? '';
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 6.h),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 10.w,
+                                height: 10.w,
+                                margin: EdgeInsets.only(top: 3.h),
+                                decoration: BoxDecoration(
+                                  color: DriverColors.green,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              SizedBox(width: 10.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    RichText(
+                                      text: TextSpan(children: [
+                                        TextSpan(
+                                          text: name,
+                                          style: GoogleFonts.inter(
+                                              fontSize: 13.sp,
+                                              fontWeight: FontWeight.w800,
+                                              color: DriverColors.text)),
+                                        TextSpan(
+                                          text: ' ×$qty',
+                                          style: GoogleFonts.inter(
+                                              fontSize: 11.sp,
+                                              fontWeight: FontWeight.w500,
+                                              color: DriverColors.textMuted)),
+                                        if (size.isNotEmpty)
+                                          TextSpan(
+                                            text: ' · $size',
+                                            style: GoogleFonts.inter(
+                                                fontSize: 11.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: DriverColors.textMuted)),
+                                      ]),
+                                    ),
+                                    Text(
+                                        '${reason.isNotEmpty ? reason : ''} ${reason.isNotEmpty ? '· ' : ''}(SKU $sku) · \$${(price * qty).toStringAsFixed(2)}',
+                                        style: GoogleFonts.inter(
+                                            fontSize: 10.sp,
+                                            fontWeight: FontWeight.w500,
+                                            color: DriverColors.textHint)),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                  '\$${(price * qty).toStringAsFixed(2)}',
+                                  style: GoogleFonts.inter(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: DriverColors.green)),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+
               // Checklist
               DriverInfoCard(
                 title: 'Checklist',

@@ -44,6 +44,10 @@ class Address {
   final String? mobile;
   final Map<String, double>? currentLoc;
   final Map<String, double>? deliveryLoc;
+  final String? deliveryZone;
+  final String? deliveryDay;
+  final bool? isOutOfZone;
+  final DateTime? outOfZoneDate;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final int? v;
@@ -60,6 +64,10 @@ class Address {
     this.mobile,
     this.currentLoc,
     this.deliveryLoc,
+    this.deliveryZone,
+    this.deliveryDay,
+    this.isOutOfZone,
+    this.outOfZoneDate,
     this.createdAt,
     this.updatedAt,
     this.v,
@@ -87,6 +95,10 @@ class Address {
       mobile: json['phoneNumber'] as String?,
       currentLoc: _parseLatLon(json['currentLoc']),
       deliveryLoc: _parseLatLon(json['deliveryLoc']),
+      deliveryZone: json['deliveryZone'] as String?,
+      deliveryDay: json['deliveryDay'] as String?,
+      isOutOfZone: json['isOutOfZone'] as bool?,
+      outOfZoneDate: json['outOfZoneDate'] != null ? DateTime.tryParse(json['outOfZoneDate']) : null,
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
       v: json['__v'] as int?,
@@ -105,6 +117,10 @@ class Address {
         'phoneNumber': mobile,
         if (currentLoc != null) 'currentLoc': currentLoc,
         if (deliveryLoc != null) 'deliveryLoc': deliveryLoc,
+        if (deliveryZone != null) 'deliveryZone': deliveryZone,
+        if (deliveryDay != null) 'deliveryDay': deliveryDay,
+        if (isOutOfZone != null) 'isOutOfZone': isOutOfZone,
+        if (outOfZoneDate != null) 'outOfZoneDate': outOfZoneDate?.toIso8601String(),
         'createdAt': createdAt?.toIso8601String(),
         'updatedAt': updatedAt?.toIso8601String(),
         '__v': v,
@@ -119,6 +135,8 @@ class Address {
   String get safePinCode => pinCode ?? '';
   String get safeCountry => country ?? '';
   String get safeMobile => mobile ?? '';
+  String get safeDeliveryZone => deliveryZone ?? '';
+  String get safeDeliveryDay => deliveryDay ?? '';
   String get displayAddress =>
       '$safeAddressLine, $safeCity, $safeState $safePinCode, $safeCountry';
 }

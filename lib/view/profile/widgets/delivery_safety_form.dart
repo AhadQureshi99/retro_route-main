@@ -441,193 +441,8 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
         _buildHeader(),
         SizedBox(height: 20.h),
 
-        // ── Address ──
-        _buildSection(
-          color: Colors.white,
-          borderColor: Colors.grey[300]!,
-          children: [
-            _label("Address"),
-            _sublabel("We'll match you to the right milk run."),
-            SizedBox(height: 10.h),
-
-            // Use my location button
-            _isLoadingLocation
-                ? Row(
-                    children: [
-                      SizedBox(
-                        width: 14.w,
-                        height: 14.w,
-                        child: const CircularProgressIndicator(
-                            strokeWidth: 2, color: AppColors.primary),
-                      ),
-                      SizedBox(width: 8.w),
-                      Text('Getting location…',
-                          style: GoogleFonts.inter(
-                              fontSize: 14.sp, color: Colors.grey.shade500)),
-                    ],
-                  )
-                : GestureDetector(
-                    onTap: _useMyLocation,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 14.w, vertical: 8.h),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.my_location_rounded,
-                              size: 14.sp, color: Colors.white),
-                          SizedBox(width: 6.w),
-                          Text('Use my location',
-                              style: GoogleFonts.inter(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white)),
-                        ],
-                      ),
-                    ),
-                  ),
-
-            SizedBox(height: 12.h),
-
-            // Street Address
-            _fieldLabel("Street Address"),
-            SizedBox(height: 4.h),
-            _textField(
-              controller: _streetCtrl,
-              hint: "123 King St W",
-              prefixIcon: Icons.location_on,
-              prefixColor: Colors.red,
-              onChanged: (v) {
-                final parts = [v, _cityCtrl.text, _postalCtrl.text]
-                    .where((p) => p.trim().isNotEmpty)
-                    .toList();
-                _update(d.copyWith(street: v, address: parts.join(', ')));
-                _onStreetChanged(v);
-              },
-            ),
-            if (_streetSuggestions.isNotEmpty) ...[
-              SizedBox(height: 4.h),
-              _streetSuggestionDropdown(
-                suggestions: _streetSuggestions,
-                onSelect: _selectStreetSuggestion,
-                onClose: () => setState(() => _streetSuggestions = []),
-              ),
-            ],
-            SizedBox(height: 10.h),
-
-            // City
-            _fieldLabel("City"),
-            SizedBox(height: 4.h),
-            _textField(
-              controller: _cityCtrl,
-              hint: "Cornwall",
-              onChanged: (v) {
-                final parts = [_streetCtrl.text, v, _postalCtrl.text]
-                    .where((p) => p.trim().isNotEmpty)
-                    .toList();
-                _update(d.copyWith(city: v, address: parts.join(', ')));
-              },
-            ),
-            if (_citySuggestions.isNotEmpty) ...
-              [
-                SizedBox(height: 4.h),
-                _citySuggestionDropdown(
-                  cities: _citySuggestions,
-                  onClose: () => setState(() => _citySuggestions = []),
-                  onSelect: (city) {
-                    _cityCtrl.text = city;
-                    _cityCtrl.selection = TextSelection.collapsed(
-                        offset: city.length);
-                    final parts = [_streetCtrl.text, city, _postalCtrl.text]
-                        .where((p) => p.trim().isNotEmpty)
-                        .toList();
-                    _update(d.copyWith(city: city, address: parts.join(', ')));
-                    setState(() => _citySuggestions = []);
-                  },
-                ),
-              ],
-            SizedBox(height: 10.h),
-
-            // Postal Code
-            _fieldLabel("Postal Code"),
-            SizedBox(height: 4.h),
-            _textField(
-              controller: _postalCtrl,
-              hint: "K6V 1B1",
-              onChanged: (v) {
-                final formatted = _formatPostalInput(v);
-                if (_postalCtrl.text != formatted) {
-                  _postalCtrl.value = TextEditingValue(
-                    text: formatted,
-                    selection: TextSelection.collapsed(offset: formatted.length),
-                  );
-                }
-                final parts = [_streetCtrl.text, _cityCtrl.text, formatted]
-                    .where((p) => p.trim().isNotEmpty)
-                    .toList();
-                _update(d.copyWith(postalCode: formatted, address: parts.join(', ')));
-              },
-            ),
-            if (_detectedZone != null) ...[
-              SizedBox(height: 10.h),
-              _detectedZoneCard(),
-            ] else if (_cityCtrl.text.trim().length >= 3 && _citySuggestions.isEmpty) ...[
-              SizedBox(height: 10.h),
-              _outOfAreaCard(),
-            ],
-            if (_selectedLat != null && _selectedLon != null) ...[
-              SizedBox(height: 8.h),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Text(
-                  'Latitude: ${_selectedLat!.toStringAsFixed(6)}  |  Longitude: ${_selectedLon!.toStringAsFixed(6)}',
-                  style: GoogleFonts.inter(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ),
-            ],
-            SizedBox(height: 10.h),
-
-            Row(
-              children: [
-                _smallLabel("Label:"),
-                SizedBox(width: 8.w),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[300]!),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: d.addressLabel.isEmpty ? 'Home' : d.addressLabel,
-                      isDense: true,
-                      style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey[700]),
-                      items: ['Home', 'Work', 'Other']
-                          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                          .toList(),
-                      onChanged: (v) => _update(d.copyWith(addressLabel: v ?? 'Home')),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        SizedBox(height: 16.h),
+        // ── Address (hidden — managed via My Addresses) ──
+        // _buildSection( ... address fields ... ),
 
         // ── Drop-off spot ──
         _buildSection(
@@ -874,12 +689,8 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
           SizedBox(height: 16.h),
         ],
 
-        // ── Dog safety (read-only in profile) ──
-        IgnorePointer(
-          ignoring: true,
-          child: Opacity(
-            opacity: 0.6,
-            child: _buildSection(
+        // ── Dog safety ──
+        _buildSection(
           color: Colors.orange[50]!,
           borderColor: Colors.orange[200]!,
           children: [
@@ -1023,8 +834,6 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
             ],
           ],
         ),
-        ),
-        ),
         SizedBox(height: 16.h),
 
         // ── Contact & proof ──
@@ -1043,7 +852,6 @@ class _DeliverySafetyFormState extends State<DeliverySafetyForm> {
               children: [
                 {'value': 'emailNotification', 'label': 'Email/App notification'},
                 {'value': 'callMe', 'label': 'Call me'},
-                {'value': 'onlyIfNecessary', 'label': 'Only if necessary'},
               ]
                   .map((opt) => _chip(
                         label: opt['label']!,

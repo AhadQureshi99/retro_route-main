@@ -88,8 +88,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final categoriesAsync = ref.watch(categoriesProvider);
     final selectedCat = ref.watch(_searchCategoryProvider);
     final selectedSub = ref.watch(_searchSubcategoryProvider);
-    // Use subcategory ID if selected, else category ID, else null (all products)
-    final productCatId = selectedSub?.id ?? selectedCat?.id;
+    // When searching, always fetch ALL products so results span every category/subcategory.
+    // Only filter by category when no search text is entered.
+    final productCatId = _searchQuery.isNotEmpty
+        ? null
+        : (selectedSub?.id ?? selectedCat?.id);
     final productsAsync = ref.watch(productsProvider(productCatId));
     final cart = ref.watch(cartProvider);
     final itemCount = cart.itemCount;
@@ -113,6 +116,48 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
       
         automaticallyImplyLeading: false,
+        leading: GestureDetector(
+          onTap: () {
+            ref.read(cartProvider.notifier).clear();
+            goRouter.go('${AppRoutes.onboarding}?screen=3');
+          },
+          child: Container(
+            margin: EdgeInsets.only(left: 10.w, top: 8.h, bottom: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF8C00), Color(0xFFFF6B00)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24.r),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF6B00).withOpacity(0.35),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.refresh_rounded, color: Colors.white, size: 16.sp),
+                SizedBox(width: 5.w),
+                Text(
+                  'Start Over',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        leadingWidth: 130.w,
         title: Row(
           children: [
             Image.asset(
@@ -198,7 +243,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             color: AppColors.bgColor,
             child: CustomTextField(
               controller: _searchController,
-              hintText: "Search products, brands, categories...",
+              hintText: "Search products",
               prefixIcon: Icons.search_rounded,
               borderRadius: 20.r,
               fillColor: AppColors.cardBgColor,
@@ -482,6 +527,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                 goRouter.push(AppRoutes.productdetails, extra: product);
                               },
                               onAddToCart: () {
+                                  if ((product.status ?? '') == 'Out of Stock' || (product.stock ?? 0) <= 0) {
+                                    CustomToast.error(msg: '${product.safeName} is out of stock');
+                                    return;
+                                  }
                                  final isInCart = cart.items.any(
                                     (item) => item.product.id == product.id,
                                   );

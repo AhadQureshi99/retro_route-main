@@ -297,6 +297,18 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     required String title,
     required String desc,
   }) {
+    return _featureItemWidget(
+      widget: Icon(icon, color: AppColors.btnColor, size: 24.sp),
+      title: title,
+      desc: desc,
+    );
+  }
+
+  Widget _featureItemWidget({
+    required Widget widget,
+    required String title,
+    required String desc,
+  }) {
     return Expanded(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 4.h),
@@ -304,37 +316,32 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppColors.btnColor, size: 24.sp),
+            widget,
             SizedBox(height: 4.h),
-            SizedBox(
-              width: double.infinity,
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xff111827),
-                ),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 9.5.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+                height: 1.2,
               ),
             ),
-            SizedBox(height: 2.h),
-            SizedBox(
-              width: double.infinity,
-              child: Text(
-                desc,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontSize: 10.sp,
-                  color: Colors.grey.shade500,
-                ),
+            Text(
+              desc,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 9.5.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+                height: 1.2,
               ),
             ),
-            
           ],
         ),
       ),
@@ -674,7 +681,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                 color: Colors.black87,
                               ),
                               decoration: InputDecoration(
-                                hintText: 'Search products, brands...',
+                                hintText: 'Search products',
                                 hintStyle: GoogleFonts.inter(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w400,
@@ -896,23 +903,23 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                           children: [
                             _featureItem(
                               icon: Icons.local_shipping_outlined,
-                              title: 'Free Water Test',
-                              desc: 'On first orders',
+                              title: 'FREE',
+                              desc: 'DELIVERY',
                             ),
                             _featureItem(
-                              icon: Icons.shield_outlined,
-                              title: 'Secure Payment',
-                              desc: 'SSL encrypted checkout',
+                              icon: Icons.science_outlined,
+                              title: 'FREE WATER',
+                              desc: 'TEST',
                             ),
                             _featureItem(
-                              icon: Icons.headset_mic_outlined,
-                              title: 'Expert Support',
-                              desc: '24/7 customer service',
+                              icon: Icons.payments_outlined,
+                              title: 'SECURE',
+                              desc: 'PAYMENT',
                             ),
-                            _featureItem(
-                              icon: Icons.eco_outlined,
-                              title: 'Eco Friendly',
-                              desc: 'Sustainable products',
+                            _featureItemWidget(
+                              widget: Text('🍁', style: TextStyle(fontSize: 24.sp)),
+                              title: 'MADE IN',
+                              desc: 'CANADA',
                             ),
                           ],
                         ),
@@ -1323,6 +1330,10 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                   goRouter.push(AppRoutes.productdetails, extra: product);
                                 },
                                 onAddToCart: () {
+                                  if ((product.status ?? '') == 'Out of Stock' || (product.stock ?? 0) <= 0) {
+                                    CustomToast.error(msg: '${product.safeName} is out of stock');
+                                    return;
+                                  }
                                   final isInCart = cart.items.any(
                                     (item) => item.product.id == product.id,
                                   );

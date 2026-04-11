@@ -47,7 +47,6 @@ const _gateLocations = ['Left side', 'Right side', 'Back', 'Other'];
 const _contactOptions = [
   {'value': 'emailNotification', 'label': 'Email/App notification'},
   {'value': 'callMe', 'label': 'Call me'},
-  {'value': 'onlyIfNecessary', 'label': 'Only if necessary'},
 ];
 
 class DeliverySafetySection extends StatefulWidget {
@@ -316,21 +315,7 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
     final data = flushToData(widget.data);
     widget.onChange(data);
 
-    if (data.street.trim().isEmpty) {
-      setState(() => _validationError = 'address');
-      _showSnack('Please enter your street address.');
-      return false;
-    }
-    if (data.city.trim().isEmpty) {
-      setState(() => _validationError = 'address');
-      _showSnack('Please enter your city.');
-      return false;
-    }
-    if (data.postalCode.trim().isEmpty) {
-      setState(() => _validationError = 'address');
-      _showSnack('Please enter your postal code.');
-      return false;
-    }
+    // Address validation skipped — collected later, not during onboarding
     if (data.dropOffSpot.trim().isEmpty) {
       setState(() => _validationError = 'dropoff');
       _showSnack('Please select a drop-off spot.');
@@ -456,202 +441,8 @@ class DeliverySafetySectionState extends State<DeliverySafetySection> {
           ),
         ),
 
-        SizedBox(height: 16.h),
-
-        // ── Address ──────────────────────────────────
-        _card(
-          borderColor: _validationError == 'address' ? Colors.red : null,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _sectionTitle("Address"),
-              Text("We'll match you to the right milk run.", style: _caption),
-              SizedBox(height: 10.h),
-
-              // Street
-              _fieldLabel("Street Address"),
-              SizedBox(height: 4.h),
-              _textField(
-                controller: _streetCtrl,
-                hint: "123 King St W",
-                prefix: Icons.location_on_rounded,
-                prefixColor: Colors.red,
-         
-
-                onChanged: (v) {
-                  final parts = [
-                    v,
-                    _cityCtrl.text,
-                    _postalCtrl.text,
-                  ].where((p) => p.trim().isNotEmpty).toList();
-                  _update(
-                    (s) => s.copyWith(street: v, address: parts.join(', ')),
-                  );
-                  _onStreetChanged(v);
-                },
-              ),
-              if (_streetSuggestions.isNotEmpty) ...[
-                SizedBox(height: 4.h),
-                _streetSuggestionDropdown(
-                  suggestions: _streetSuggestions,
-                  onSelect: _selectStreetSuggestion,
-                  onClose: () => setState(() => _streetSuggestions = []),
-                ),
-              ],
-              SizedBox(height: 10.h),
-
-              // City
-              _fieldLabel("City"),
-              SizedBox(height: 4.h),
-              _textField(
-                controller: _cityCtrl,
-                hint: "Cornwall",
-                onChanged: (v) {
-                  final parts = [
-                    _streetCtrl.text,
-                    v,
-                    _postalCtrl.text,
-                  ].where((p) => p.trim().isNotEmpty).toList();
-                  _update(
-                    (s) => s.copyWith(city: v, address: parts.join(', ')),
-                  );
-                  _onCityChanged(v);
-                },
-              ),
-              if (_citySuggestions.isNotEmpty) ...[
-                SizedBox(height: 4.h),
-                _citySuggestionDropdown(
-                  cities: _citySuggestions,
-                  onClose: () => setState(() => _citySuggestions = []),
-                  onSelect: (city) {
-                    _cityCtrl.text = city;
-                    _cityCtrl.selection = TextSelection.collapsed(
-                      offset: city.length,
-                    );
-                    final parts = [
-                      _streetCtrl.text,
-                      city,
-                      _postalCtrl.text,
-                    ].where((p) => p.trim().isNotEmpty).toList();
-                    _update(
-                      (s) => s.copyWith(city: city, address: parts.join(', ')),
-                    );
-                    setState(() {
-                      _citySuggestions = [];
-                      _detectedZone = detectZoneByCity(city);
-                      _selectedDeliveryDate = null;
-                      _showDateOptions = false;
-                    });
-                  },
-                ),
-              ],
-              SizedBox(height: 10.h),
-
-              // Postal Code
-              _fieldLabel("Postal Code"),
-              SizedBox(height: 4.h),
-              _textField(
-                controller: _postalCtrl,
-                hint: "K6V 1B1",
-                onChanged: (v) {
-                  final formatted = _formatPostalInput(v);
-                  if (_postalCtrl.text != formatted) {
-                    _postalCtrl.value = TextEditingValue(
-                      text: formatted,
-                      selection: TextSelection.collapsed(
-                        offset: formatted.length,
-                      ),
-                    );
-                  }
-                  final parts = [
-                    _streetCtrl.text,
-                    _cityCtrl.text,
-                    formatted,
-                  ].where((p) => p.trim().isNotEmpty).toList();
-                  _update(
-                    (s) => s.copyWith(
-                      postalCode: formatted,
-                      address: parts.join(', '),
-                    ),
-                  );
-                },
-              ),
-              SizedBox(height: 10.h),
-
-              Row(
-                children: [
-                  _isLoadingLocation
-                      ? Row(
-                          children: [
-                            SizedBox(
-                              width: 14.w,
-                              height: 14.w,
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              'Getting location…',
-                              style: GoogleFonts.inter(
-                                fontSize: 12.sp,
-                                color: Colors.grey.shade500,
-                              ),
-                            ),
-                          ],
-                        )
-                      : _pillButton(
-                          'Use my location',
-                          icon: Icons.my_location_rounded,
-                          selected: false,
-                          onTap: _useMyLocation,
-                        ),
-                  SizedBox(width: 10.w),
-                  Text(
-                    "Label:",
-                    style: GoogleFonts.inter(
-                      fontSize: 12.sp,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                  SizedBox(width: 6.w),
-                  _buildLabelDropdown(d),
-                ],
-              ),
-
-              if (_detectedZone != null) ...[
-                SizedBox(height: 10.h),
-                _detectedZoneCard(),
-              ] else if (_cityCtrl.text.trim().length >= 3 && _citySuggestions.isEmpty) ...[
-                SizedBox(height: 10.h),
-                _outOfAreaCard(),
-              ],
-              if (_selectedLat != null && _selectedLon != null) ...[
-                SizedBox(height: 8.h),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(8.r),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Text(
-                    'Latitude: ${_selectedLat!.toStringAsFixed(6)}  |  Longitude: ${_selectedLon!.toStringAsFixed(6)}',
-                    style: GoogleFonts.inter(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-
-        SizedBox(height: 14.h),
+        // ── Address section hidden during signup ──
+        // (Address is collected later, not during onboarding)
 
         // ── Drop-off spot ────────────────────────────
         _card(

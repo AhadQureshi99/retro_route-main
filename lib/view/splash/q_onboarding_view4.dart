@@ -661,39 +661,6 @@ class _BookMyStopContentState extends State<BookMyStopContent> {
                                 ],
                               ),
                             ],
-                            SizedBox(height: 10.h),
-                            // ── Change address button (inside card) ────────
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  setState(() {
-                                    _showAddressInput = !_showAddressInput;
-                                    if (!_showAddressInput) {
-                                      _addressCtrl.clear();
-                                      _placeSuggestions = [];
-                                      _showPlaceSuggestions = false;
-                                    }
-                                  });
-                                },
-                                icon: Icon(Icons.edit_location_alt_outlined, size: 16.sp),
-                                label: Text(
-                                  'Change address',
-                                  style: GoogleFonts.inter(
-                                      fontSize: 13.sp, fontWeight: FontWeight.w600),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.btnColor,
-                                  side: BorderSide(color: AppColors.btnColor.withOpacity(0.5)),
-                                  padding: EdgeInsets.symmetric(vertical: 10.h),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10.r),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // ── Address input (toggled) ────────────────────
-                            if (_showAddressInput) _buildAddressInputWidget(),
                           ],
                         ),
                       ),

@@ -72,7 +72,7 @@ class _PostSignupSetupScreenState extends ConsumerState<PostSignupSetupScreen> {
     goRouter.go(AppRoutes.host);
   }
 
-  /// Creates a server-side address from locally saved guest onboarding data
+  /// Creates or updates a server-side address from locally saved guest onboarding data
   /// (street, city, postal) so checkout has an address ready.
   Future<void> _restoreGuestAddress() async {
     try {
@@ -89,16 +89,36 @@ class _PostSignupSetupScreenState extends ConsumerState<PostSignupSetupScreen> {
 
       final user = ref.read(authNotifierProvider).value?.data?.user;
 
-      final success = await ref.read(addressProvider.notifier).addAddress(
-        token: token,
-        addressLine: street,
-        city: city,
-        statess: 'ON',
-        country: 'CA',
-        postalCode: postal,
-        phone: user?.phone ?? '',
-        fullName: user?.name ?? '',
-      );
+      // Check if addresses already exist
+      await ref.read(addressProvider.notifier).fetchAddresses(token);
+      final existingAddresses = ref.read(addressProvider).addresses;
+      bool success;
+
+      if (existingAddresses.isNotEmpty) {
+        final existingId = existingAddresses.first.safeId;
+        success = await ref.read(addressProvider.notifier).updateAddress(
+          token: token,
+          addressId: existingId,
+          addressLine: street,
+          city: city,
+          statess: 'ON',
+          country: 'CA',
+          postalCode: postal,
+          phone: user?.phone ?? '',
+          fullName: user?.name ?? '',
+        );
+      } else {
+        success = await ref.read(addressProvider.notifier).addAddress(
+          token: token,
+          addressLine: street,
+          city: city,
+          statess: 'ON',
+          country: 'CA',
+          postalCode: postal,
+          phone: user?.phone ?? '',
+          fullName: user?.name ?? '',
+        );
+      }
 
       if (success) {
         // Select the newly created address for checkout

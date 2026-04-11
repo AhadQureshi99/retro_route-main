@@ -72,6 +72,10 @@ class AddressNotifier extends Notifier<AddressState> {
     String? fullName,
     Map<String, double>? currentLoc,
     Map<String, double>? deliveryLoc,
+    String? deliveryZone,
+    String? deliveryDay,
+    bool? isOutOfZone,
+    DateTime? outOfZoneDate,
   }) async {
     state = state.copyWith(isLoading: true);
 
@@ -88,6 +92,10 @@ class AddressNotifier extends Notifier<AddressState> {
         phone: phone,
         currentLoc: currentLoc,
         deliveryLoc: deliveryLoc,
+        deliveryZone: deliveryZone,
+        deliveryDay: deliveryDay,
+        isOutOfZone: isOutOfZone,
+        outOfZoneDate: outOfZoneDate,
       );
 
       await fetchAddresses(token);
@@ -110,6 +118,10 @@ class AddressNotifier extends Notifier<AddressState> {
     String? fullName,
     Map<String, double>? currentLoc,
     Map<String, double>? deliveryLoc,
+    String? deliveryZone,
+    String? deliveryDay,
+    bool? isOutOfZone,
+    DateTime? outOfZoneDate,
   }) async {
     state = state.copyWith(isLoading: true);
 
@@ -127,6 +139,10 @@ class AddressNotifier extends Notifier<AddressState> {
         fullname: fullName ?? '',
         currentLoc: currentLoc,
         deliveryLoc: deliveryLoc,
+        deliveryZone: deliveryZone,
+        deliveryDay: deliveryDay,
+        isOutOfZone: isOutOfZone,
+        outOfZoneDate: outOfZoneDate,
       );
 
       await fetchAddresses(token);

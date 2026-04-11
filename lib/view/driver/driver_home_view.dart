@@ -234,17 +234,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              await ref.read(authNotifierProvider.notifier).logout();
-              if (context.mounted) {
-                goRouter.go(AppRoutes.login);
-              }
-            },
-          ),
-        ],
+        actions: const [],
       ),
       floatingActionButton: Consumer(
         builder: (context, ref, _) {
@@ -689,7 +679,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
                       Expanded(
                         child: customText(
                           text: delivery.deliveryAddress?.fullAddress ??
-                              'No address',
+                              'No address assigned',
                           fontSize: 13,
                           fontWeight: FontWeight.normal,
                           color: Colors.grey[700]!,

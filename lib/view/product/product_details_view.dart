@@ -86,6 +86,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         : quantity;
     final isInCart = matchingIndex != -1;
 
+    final stockQty = product.stock ?? 0;
+    final isOutOfStock = (product.status ?? '') == 'Out of Stock' || stockQty <= 0;
+    final isAtMaxStock = currentQuantity >= stockQty && stockQty > 0;
+
     final favState = ref.watch(favoritesProvider);
     final isFavorited = favState.isFavorited(widget.product.id ?? '');
 
@@ -543,6 +547,26 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                   SizedBox(height: 14.h),
 
                   // Quantity selector
+                  if (isOutOfStock)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Row(children: [
+                          Icon(Icons.block, color: const Color(0xFFDC2626), size: 16.sp),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'This product is currently out of stock',
+                            style: GoogleFonts.inter(fontSize: 12.sp, fontWeight: FontWeight.w600, color: const Color(0xFFDC2626)),
+                          ),
+                        ]),
+                      ),
+                    )
+                  else ...[
                   Row(
                     children: [
                       Text(
@@ -600,7 +624,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               Container(width: 1, color: Colors.grey.shade400),
                               _qtyButton(
                                 icon: Icons.add,
-                                onTap: () {
+                                onTap: isAtMaxStock ? null : () {
                                   if (isInCart) {
                                     ref
                                         .read(cartProvider.notifier)
@@ -611,7 +635,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                               hasSizes ? selectedSize : null,
                                         );
                                   } else {
-                                    setState(() => quantity = quantity + 1);
+                                    final maxQty = stockQty > 0 ? stockQty : 999;
+                                    if (quantity < maxQty) {
+                                      setState(() => quantity = quantity + 1);
+                                    }
                                   }
                                 },
                               ),
@@ -621,6 +648,15 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       ),
                     ],
                   ),
+                  if (isAtMaxStock)
+                    Padding(
+                      padding: EdgeInsets.only(top: 6.h),
+                      child: Text(
+                        'Max available: $stockQty',
+                        style: GoogleFonts.inter(fontSize: 11.sp, fontWeight: FontWeight.w600, color: Colors.orange),
+                      ),
+                    ),
+                  ], // end of else (not out of stock)
                   SizedBox(height: 12.h),
 
                   const Divider(color: Color(0xffB6B6B6), thickness: 0.8),
@@ -871,10 +907,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _featureItem(Icons.local_shipping_outlined, "FAST", "DELIVERY"),
-                  _featureItem(Icons.touch_app_outlined, "SUBSCRIBE &", "SAVE"),
+                  _featureItem(Icons.local_shipping_outlined, "FREE", "DELIVERY"),
+                  _featureItem(Icons.science_outlined, "FREE WATER", "TEST"),
                   _featureItem(Icons.payments_outlined, "INCREDIBLE", "VALUE"),
-                  _featureItem(Icons.eco_outlined, "CANADA OWNED &", "OPERATED"),
+                  _featureItemWidget(
+                    Text('🍁', style: TextStyle(fontSize: 28.sp)),
+                    "CANADIAN", "OWNED",
+                  ),
                 ],
               ),
             ),
@@ -987,7 +1026,26 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         ),
       ),
 
-      bottomNavigationBar: Container(
+      bottomNavigationBar: isOutOfStock
+          ? Container(
+              color: Colors.white,
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h + MediaQuery.of(context).padding.bottom),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey.shade300,
+                    foregroundColor: Colors.grey.shade600,
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                    elevation: 0,
+                  ),
+                  child: Text("Out of Stock", style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            )
+          : Container(
         color: Colors.white,
         padding: EdgeInsets.fromLTRB(
           16.w,
@@ -1004,11 +1062,29 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                     CustomToast.error(msg: 'Please select a size');
                     return;
                   }
-                  ref.read(cartProvider.notifier).add(
-                        product,
-                        quantity: currentQuantity,
-                        selectedSize: hasSizes ? selectedSize : null,
-                      );
+                  final cartNotifier = ref.read(cartProvider.notifier);
+                  final sizeArg = hasSizes ? selectedSize : null;
+                  // Always use updateQuantity (replace mode) to avoid
+                  // double-tap causing quantity to accumulate via add().
+                  final freshCart = ref.read(cartProvider);
+                  final freshIndex = freshCart.items.indexWhere(
+                    (item) =>
+                        item.product.id == product.id &&
+                        (item.selectedSize ?? '') == (sizeArg ?? ''),
+                  );
+                  if (freshIndex != -1) {
+                    cartNotifier.updateQuantity(
+                      product,
+                      currentQuantity,
+                      selectedSize: sizeArg,
+                    );
+                  } else {
+                    cartNotifier.add(
+                      product,
+                      quantity: quantity,
+                      selectedSize: sizeArg,
+                    );
+                  }
                   CustomToast.success(
                     msg: isInCart
                         ? "Cart updated!"
@@ -1039,11 +1115,16 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                     CustomToast.error(msg: 'Please select a size');
                     return;
                   }
-                  // Use updateQuantity (replace) so the cart quantity is set
-                  // to exactly what the user selected, not added on top.
                   final cartNotifier = ref.read(cartProvider.notifier);
                   final sizeArg = hasSizes ? selectedSize : null;
-                  if (isInCart) {
+                  // Fresh check to avoid stale closure issues on rapid taps
+                  final freshCart = ref.read(cartProvider);
+                  final freshIndex = freshCart.items.indexWhere(
+                    (item) =>
+                        item.product.id == product.id &&
+                        (item.selectedSize ?? '') == (sizeArg ?? ''),
+                  );
+                  if (freshIndex != -1) {
                     cartNotifier.updateQuantity(
                       product,
                       currentQuantity,
@@ -1098,10 +1179,17 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   // ─── Feature item for the features bar ───────────────────────────────────
   Widget _featureItem(IconData icon, String line1, String line2) {
+    return _featureItemWidget(
+      Icon(icon, size: 28.sp, color: AppColors.btnColor),
+      line1, line2,
+    );
+  }
+
+  Widget _featureItemWidget(Widget iconWidget, String line1, String line2) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 28.sp, color: AppColors.btnColor),
+        iconWidget,
         SizedBox(height: 6.h),
         Text(
           line1,

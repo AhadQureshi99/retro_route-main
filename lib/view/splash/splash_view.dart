@@ -66,7 +66,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     final bool hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
 
     if (!hasSeenOnboarding) {
-      await prefs.setBool('has_seen_onboarding', true);
       if (mounted) {
         goRouter.go(AppRoutes.onboarding);
       }

@@ -8,8 +8,8 @@ import 'package:retro_route/utils/app_toast.dart';
 
 const _waterTypes = [
   {'value': 'pool', 'label': 'Pool', 'desc': 'A swimming pool', 'icon': '🏊'},
-  {'value': 'hotTub', 'label': 'Hot tub', 'desc': 'A spa / hot tub', 'icon': '♨️'},
-  {'value': 'both', 'label': 'Both', 'desc': 'Pool + hot tub', 'icon': '💧'},
+  {'value': 'hotTub', 'label': 'Hot Tub', 'desc': 'Hot Tub / Swim Spa', 'icon': '♨️'},
+  {'value': 'both', 'label': 'Both', 'desc': 'Pool + Hot Tub', 'icon': '💧'},
   {'value': 'notRightNow', 'label': 'Not right now', 'desc': 'Skip water details', 'icon': '—'},
 ];
 
@@ -726,14 +726,14 @@ class WaterSetupSectionState extends State<WaterSetupSection> {
                 ),
 
                 SizedBox(height: 14.h),
-                Text("Filter model (optional)", style: _label),
+                Text("Filter Details", style: _label),
                 SizedBox(height: 6.h),
                 TextField(
                   controller: _filterCtrl,
                   style: GoogleFonts.inter(fontSize: 12.sp),
                   onChanged: (v) => _updateHotTub((h) => h.copyWith(filterModel: v)),
                   decoration: InputDecoration(
-                    hintText: "Add later (photo / model #)",
+                    hintText: "Add later (photo / Model No)",
                     hintStyle: GoogleFonts.inter(fontSize: 11.sp, color: Colors.grey.shade400),
                     prefixIcon: Padding(padding: EdgeInsets.only(left: 10.w, right: 4.w), child: Text("💾", style: TextStyle(fontSize: 14.sp))),
                     prefixIconConstraints: BoxConstraints(minWidth: 30.w),

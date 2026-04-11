@@ -110,12 +110,14 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
     'Saltwater': 'saltwater',
     'Bromine': 'bromine',
     'Add Other': 'addOther',
+    'Not Sure': 'notSure',
   };
 
   static const _hotTubSanitizerMap = {
     'Chlorine': 'chlorine',
     'Bromine': 'bromine',
     'Add Other': 'addOther',
+    'Not Sure': 'notSure',
   };
 
   @override
@@ -165,7 +167,7 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
                     }
                   }, Colors.blue),
                   SizedBox(width: 6.w),
-                  _chip('Liters', _volumeUnit == 'liters', () {
+                  _chip('Litres', _volumeUnit == 'liters', () {
                     setState(() => _volumeUnit = 'liters');
                     _update(w.copyWith(pool: w.pool.copyWith(volumeUnit: 'liters')));
                     if (w.pool.estimatedVolume > 0) {
@@ -186,8 +188,33 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
                       () => _update(w.copyWith(pool: w.pool.copyWith(volumeMethod: 'helpEstimate'))), AppColors.primary),
                   _chip('Add Other', w.pool.volumeMethod == 'addOther',
                       () => _update(w.copyWith(pool: w.pool.copyWith(volumeMethod: 'addOther'))), AppColors.primary),
+                  _chip('Not Sure', w.pool.volumeMethod == 'notSure',
+                      () => _update(w.copyWith(pool: w.pool.copyWith(volumeMethod: 'notSure'))), AppColors.primary),
                 ],
               ),
+
+              // ── Not Sure message ──
+              if (w.pool.volumeMethod == 'notSure') ...[
+                SizedBox(height: 12.h),
+                Container(
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDFA),
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 18.sp, color: AppColors.primary),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text("We will calculate it for you on our first visit!",
+                          style: GoogleFonts.inter(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               // ── Quick estimator ──
               if (w.pool.volumeMethod == 'helpEstimate') ...[
@@ -278,7 +305,7 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
               // ── Know it field ──
               if (w.pool.volumeMethod == 'knowIt') ...[
                 SizedBox(height: 12.h),
-                _smallLabel("Enter your pool volume (${_volumeUnit == 'liters' ? 'liters' : 'gallons'})"),
+                _smallLabel("Enter your pool volume (${_volumeUnit == 'liters' ? 'litres' : 'gallons'})"),
                 SizedBox(height: 6.h),
                 _numberField(_poolVolumeCtrl, _volumeUnit == 'liters' ? "e.g., 68000" : "e.g., 18000", (v) {
                   final val = int.tryParse(v) ?? 0;
@@ -316,6 +343,28 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
                       () => _update(w.copyWith(pool: w.pool.copyWith(sanitizerSystem: e.value))), AppColors.blue);
                 }).toList(),
               ),
+
+              if (w.pool.sanitizerSystem == 'notSure') ...[
+                SizedBox(height: 12.h),
+                Container(
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDFA),
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 18.sp, color: AppColors.primary),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text("We will calculate it for you on our first visit!",
+                          style: GoogleFonts.inter(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               if (w.pool.sanitizerSystem == 'addOther') ...[
                 SizedBox(height: 10.h),
@@ -446,7 +495,7 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
                     _update(w.copyWith(pool: w.pool.copyWith(volumeUnit: 'gallons')));
                   }, Colors.blue),
                   SizedBox(width: 6.w),
-                  _chip('Liters', _volumeUnit == 'liters', () {
+                  _chip('Litres', _volumeUnit == 'liters', () {
                     setState(() => _volumeUnit = 'liters');
                     _update(w.copyWith(pool: w.pool.copyWith(volumeUnit: 'liters')));
                   }, Colors.blue),
@@ -458,20 +507,42 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
                 spacing: 8.w,
                 runSpacing: 8.h,
                 children: (_volumeUnit == 'liters'
-                    ? ['1136 L', '1514 L', '1893 L', 'Add Other']
-                    : ['300 gal', '400 gal', '500 gal', 'Add Other']).map((v) {
-                  final val = v == 'Add Other' ? 'addOther' : v.replaceAll(RegExp(r' (gal|L)'), '');
+                    ? ['1136 L', '1514 L', '1893 L', 'Add Other', 'Not Sure']
+                    : ['300 gal', '400 gal', '500 gal', 'Add Other', 'Not Sure']).map((v) {
+                  final val = v == 'Add Other' ? 'addOther' : v == 'Not Sure' ? 'notSure' : v.replaceAll(RegExp(r' (gal|L)'), '');
                   return _chip(v, w.hotTub.volume == val,
                       () => _update(w.copyWith(hotTub: w.hotTub.copyWith(volume: val))), AppColors.blue);
                 }).toList(),
               ),
+
+              if (w.hotTub.volume == 'notSure') ...[
+                SizedBox(height: 10.h),
+                Container(
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDFA),
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 18.sp, color: AppColors.primary),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text("We will calculate it for you on our first visit!",
+                          style: GoogleFonts.inter(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               // Show dedicated input when "Add Other" is selected
               if (w.hotTub.volume == 'addOther') ...[
                 SizedBox(height: 10.h),
                 _textField(
                   controller: _hotTubCustomVolCtrl,
-                  hint: "Enter your hot tub volume (e.g., ${_volumeUnit == 'liters' ? '1590 liters' : '420 gallons'})",
+                  hint: "Enter your hot tub volume (e.g., ${_volumeUnit == 'liters' ? '1590 litres' : '420 gallons'})",
                   onChanged: (v) => _update(w.copyWith(hotTub: w.hotTub.copyWith(customVolume: v))),
                 ),
               ],
@@ -483,7 +554,7 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
                 SizedBox(height: 6.h),
                 _textField(
                   controller: _hotTubCustomVolCtrl,
-                  hint: "e.g., ${_volumeUnit == 'liters' ? '1590 liters' : '420 gallons'}",
+                  hint: "e.g., ${_volumeUnit == 'liters' ? '1590 litres' : '420 gallons'}",
                   prefixIcon: Icons.edit,
                   prefixColor: AppColors.blue,
                   onChanged: (v) => _update(w.copyWith(hotTub: w.hotTub.copyWith(customVolume: v))),
@@ -501,6 +572,28 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
                       () => _update(w.copyWith(hotTub: w.hotTub.copyWith(sanitizerSystem: e.value))), AppColors.blue);
                 }).toList(),
               ),
+
+              if (w.hotTub.sanitizerSystem == 'notSure') ...[
+                SizedBox(height: 12.h),
+                Container(
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDFA),
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 18.sp, color: AppColors.primary),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text("We will calculate it for you on our first visit!",
+                          style: GoogleFonts.inter(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               if (w.hotTub.sanitizerSystem == 'addOther') ...[
                 SizedBox(height: 10.h),
@@ -525,11 +618,11 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
               ),
 
               SizedBox(height: 14.h),
-              _smallLabel("Filter model (optional)"),
+              _smallLabel("Filter Details"),
               SizedBox(height: 6.h),
               _textField(
                 controller: _hotTubFilterCtrl,
-                hint: "Add later (photo / model #)",
+                hint: "Model No",
                 prefixIcon: Icons.save_outlined,
                 prefixColor: Colors.grey,
                 onChanged: (v) => _update(w.copyWith(hotTub: w.hotTub.copyWith(filterModel: v))),
@@ -647,7 +740,7 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
             children: [
               card('pool', '🏊', 'Pool', 'A swimming pool'),
               SizedBox(width: 10.w),
-              card('hotTub', '♨️', 'Hot tub', 'A spa / hot tub'),
+              card('hotTub', '♨️', 'Hot Tub', 'Hot Tub / Swim Spa'),
             ],
           ),
         ),
@@ -655,7 +748,7 @@ class _WaterSetupFormState extends State<WaterSetupForm> {
         IntrinsicHeight(
           child: Row(
             children: [
-              card('both', '💧', 'Both', 'Pool + Hot tub'),
+              card('both', '💧', 'Both', 'Pool + Hot Tub'),
               SizedBox(width: 10.w),
               card('notRightNow', '—', 'Not right now', 'Skip water details'),
             ],

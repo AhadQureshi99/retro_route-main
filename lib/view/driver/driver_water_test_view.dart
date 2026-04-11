@@ -24,7 +24,7 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
   int _step = 0; // 0=Type&Volume, 1=Sanitizer, 2=WaterTest, 3=VisualCheck
 
   // ── Step 0: Type & Volume ──
-  late String _waterType; // 'hot_tub' or 'pool'
+  late String _waterType; // 'hot_tub', 'pool', or 'both'
   String? _volumeId;
   double? _volumeLiters;
   final TextEditingController _customVolCtrl = TextEditingController();
@@ -81,7 +81,13 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
     super.initState();
     final ws = widget.delivery.userId?.waterSetup;
     final wt = ws?.waterType ?? '';
-    _waterType = wt.toLowerCase().contains('pool') ? 'pool' : 'hot_tub';
+    if (wt.toLowerCase().contains('both')) {
+      _waterType = 'both';
+    } else if (wt.toLowerCase().contains('pool')) {
+      _waterType = 'pool';
+    } else {
+      _waterType = 'hot_tub';
+    }
 
     final san = _waterType == 'pool'
         ? (ws?.pool.sanitizerSystem ?? 'chlorine')
@@ -126,7 +132,7 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
     super.dispose();
   }
 
-  String get _poolType => _waterType == 'pool' ? 'pool' : 'hottub';
+  String get _poolType => _waterType == 'pool' ? 'pool' : _waterType == 'both' ? 'both' : 'hottub';
 
   WtStatus _getStatus(String key) {
     final val = double.tryParse(_ctrls[key]?.text ?? '');
@@ -143,7 +149,7 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
   }
 
   String _rangeText(String key) {
-    final ranges = _poolType == 'hottub' ? WaterTestRanges.hotTub : WaterTestRanges.pool;
+    final ranges = _poolType == 'hottub' ? WaterTestRanges.hotTub : WaterTestRanges.pool; // 'both' uses pool ranges
     final r = ranges[key];
     if (r == null) return '';
     final mn = r['min']!;
@@ -201,8 +207,8 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
     final stepTitles = ['New Water Test', 'Sanitizer Type', 'Water Test', 'Visual Check'];
     final stepSubtitles = [
       'What are we testing?',
-      _waterType == 'hot_tub' ? '♨️ Hot Tub · ${_volumeLiters?.toInt() ?? '?'}L' : '🏊 Pool · ${_volumeLiters?.toInt() ?? '?'}L',
-      '${widget.delivery.safeCustomerName} · ${_poolType == 'hottub' ? 'Hot tub' : 'Pool'}',
+      _waterType == 'both' ? '♨️🏊 Both · ${_volumeLiters?.toInt() ?? '?'}L' : _waterType == 'hot_tub' ? '♨️ Hot Tub · ${_volumeLiters?.toInt() ?? '?'}L' : '🏊 Pool · ${_volumeLiters?.toInt() ?? '?'}L',
+      '${widget.delivery.safeCustomerName} · ${_poolType == 'both' ? 'Pool + Hot Tub' : _poolType == 'hottub' ? 'Hot tub' : 'Pool'}',
       'What does the water look like?',
     ];
     final headerColors = [
@@ -291,7 +297,6 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
   // STEP 0: Type & Volume + Last Drain
   // ═══════════════════════════════════════════════════════════════
   Widget _buildStep0TypeVolume() {
-    final volumes = _waterType == 'hot_tub' ? _htVolumes : _poolVolumes;
     return SingleChildScrollView(
       padding: EdgeInsets.all(16.w),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -302,12 +307,28 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
           SizedBox(width: 10.w),
           Expanded(child: _typeCard('pool', '🏊', 'Pool', 'Chlorine or Salt')),
         ]),
+        SizedBox(height: 8.h),
+        Row(children: [
+          Expanded(child: _typeCard('both', '♨️🏊', 'Pool + Hot Tub / Spa', 'Customer has both')),
+        ]),
         SizedBox(height: 20.h),
         _sectionLabel('How big is it?'),
         SizedBox(height: 4.h),
-        _infoBox('Volume determines product SIZE — bigger ${_waterType == "hot_tub" ? "spa" : "pool"} = bigger containers'),
-        SizedBox(height: 8.h),
-        ...volumes.map((v) => _volumeCard(v)),
+        if (_waterType == 'both') ...[
+          _infoBox('Select the volume for the body of water you are testing now'),
+          SizedBox(height: 12.h),
+          _sectionLabel('🏊 Pool'),
+          SizedBox(height: 4.h),
+          ..._poolVolumes.map((v) => _volumeCard(v)),
+          SizedBox(height: 12.h),
+          _sectionLabel('♨️ Hot Tub'),
+          SizedBox(height: 4.h),
+          ..._htVolumes.map((v) => _volumeCard(v)),
+        ] else ...[
+          _infoBox('Volume determines product SIZE — bigger ${_waterType == "hot_tub" ? "spa" : "pool"} = bigger containers'),
+          SizedBox(height: 8.h),
+          ...(_waterType == 'hot_tub' ? _htVolumes : _poolVolumes).map((v) => _volumeCard(v)),
+        ],
         _customVolumeCard(),
         SizedBox(height: 20.h),
         _sectionLabel('Last drain?'),
@@ -317,8 +338,7 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
           _drainChip('3to6mo', '3-6 months'),
           _drainChip('6to12mo', '6-12 months'),
           _drainChip('over_1yr', '> 1 year', isWarning: true),
-          if (_waterType == 'pool')
-            _drainChip('never', 'Never / Not sure', isWarning: true, fullWidth: true),
+          _drainChip('never', 'Never / Not sure', isWarning: true, fullWidth: true),
         ]),
         SizedBox(height: 24.h),
         _nextButton('Next → Sanitizer Type',
@@ -331,12 +351,16 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
 
   Widget _typeCard(String value, String emoji, String label, String desc) {
     final selected = _waterType == value;
-    final accent = value == 'hot_tub' ? const Color(0xFF9C2B3A) : const Color(0xFF2C6E7A);
+    final accent = value == 'hot_tub'
+        ? const Color(0xFF9C2B3A)
+        : value == 'both'
+            ? const Color(0xFF5C3D8F)
+            : const Color(0xFF2C6E7A);
     return GestureDetector(
       onTap: () => setState(() {
         _waterType = value;
         _volumeId = null; _volumeLiters = null; _customVolCtrl.clear();
-        _sanitizerType = value == 'hot_tub' ? 'bromine' : 'chlorine';
+        _sanitizerType = value == 'hot_tub' ? 'bromine' : (value == 'both' ? 'chlorine' : 'chlorine');
       }),
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 14.h),
@@ -455,6 +479,12 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
             {'value': 'bromine', 'label': 'Bromine', 'desc': 'Most popular for hot tubs — low odour, stable in warm water'},
             {'value': 'chlorine', 'label': 'Chlorine', 'desc': 'Budget-friendly — available as tablets or granules'},
           ]
+        : _waterType == 'both'
+        ? [
+            {'value': 'bromine', 'label': 'Bromine', 'desc': 'Most popular for hot tubs — low odour, stable in warm water'},
+            {'value': 'chlorine', 'label': 'Chlorine', 'desc': 'Standard sanitizer — works for pool & hot tub'},
+            {'value': 'salt', 'label': 'Salt System', 'desc': 'Salt chlorine generator — typically for pools'},
+          ]
         : [
             {'value': 'chlorine', 'label': 'Chlorine', 'desc': 'Standard pool sanitizer — tablets in skimmer or floater'},
             {'value': 'salt', 'label': 'Salt System', 'desc': 'Salt chlorine generator — still needs monitoring'},
@@ -531,7 +561,7 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
       final key = p['key']!;
       if (key == 'bromine' && _sanitizerType != 'bromine') return false;
       if (key == 'freeChlorine' && _sanitizerType == 'bromine') return false;
-      if (key == 'cyanuricAcid' && _waterType == 'hot_tub') return false;
+      if (key == 'cyanuricAcid' && _waterType == 'hot_tub') return false; // show CYA for pool & both
       if (key == 'salt' && _sanitizerType != 'salt') return false;
       return true;
     }).toList();
@@ -547,7 +577,7 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
             Icon(Icons.info_outline, size: 14.sp, color: const Color(0xFF2C6E7A)),
             SizedBox(width: 6.w),
             Expanded(child: Text(
-              'Ideal ranges shown for ${_poolType == "hottub" ? "hot tub" : "pool"}. Red border = out of range.',
+              'Ideal ranges shown for ${_poolType == "hottub" ? "hot tub" : _poolType == "both" ? "pool + hot tub" : "pool"}. Red border = out of range.',
               style: GoogleFonts.inter(fontSize: 10.sp, color: const Color(0xFF2C6E7A), fontWeight: FontWeight.w600),
             )),
           ]),
@@ -645,7 +675,7 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
   // STEP 3: Visual Observations
   // ═══════════════════════════════════════════════════════════════
   Widget _buildStep3VisualCheck() {
-    final isPool = _waterType == 'pool';
+    final isPool = _waterType == 'pool' || _waterType == 'both';
     return SingleChildScrollView(
       padding: EdgeInsets.all(16.w),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -110,7 +110,7 @@ class CartScreen extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.arrow_back_rounded, color: Colors.white, size: 16.sp),
+                Icon(Icons.refresh_rounded, color: Colors.white, size: 16.sp),
                 SizedBox(width: 5.w),
                 Text(
                   'Start Over',
@@ -567,13 +567,20 @@ class CartScreen extends ConsumerWidget {
                             ),
                             horizontalSpacer(width: 12.w),
                             GestureDetector(
-                              onTap: () => ref
+                              onTap: () {
+                                final stock = product.stock ?? 0;
+                                if (stock > 0 && cartItem.quantity >= stock) {
+                                  CustomToast.warning(msg: 'Max available: $stock');
+                                  return;
+                                }
+                                ref
                                   .read(cartProvider.notifier)
                                   .updateQuantity(
                                     product,
                                     cartItem.quantity + 1,
                                     selectedSize: cartItem.selectedSize,
-                                  ),
+                                  );
+                              },
                               child: Icon(
                                 Icons.add,
                                 size: 24.sp,

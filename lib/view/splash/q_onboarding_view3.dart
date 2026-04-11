@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,16 +12,19 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
 import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
+import 'package:retro_route/view_model/address_view_model/address_view_model.dart';
+import 'package:retro_route/view_model/address_view_model/selected_delivery_address_view_model.dart';
+import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/view_model/selected_delivery_date_provider.dart';
 
-class FindMilkRunScreen extends StatefulWidget {
+class FindMilkRunScreen extends ConsumerStatefulWidget {
   const FindMilkRunScreen({super.key});
 
   @override
-  State<FindMilkRunScreen> createState() => _FindMilkRunScreenState();
+  ConsumerState<FindMilkRunScreen> createState() => _FindMilkRunScreenState();
 }
 
-class _FindMilkRunScreenState extends State<FindMilkRunScreen> {
+class _FindMilkRunScreenState extends ConsumerState<FindMilkRunScreen> {
   final _addressController = TextEditingController();
 
   bool _isSearching = false;
@@ -44,6 +48,11 @@ class _FindMilkRunScreenState extends State<FindMilkRunScreen> {
   List<Map<String, dynamic>> _placeSuggestions = [];
   bool _showPlaceSuggestions = false;
   bool _isSelectingSuggestion = false;
+
+  // Structured address fields extracted from geocode
+  String _parsedStreet = '';
+  String _parsedCity = '';
+  String _parsedPostal = '';
 
   @override
   void initState() {
@@ -147,15 +156,25 @@ class _FindMilkRunScreenState extends State<FindMilkRunScreen> {
 
           final components = (firstResult['address_components'] as List?) ?? [];
           String city = '';
+          String streetNumber = '';
+          String route = '';
+          String postal = '';
           for (final c in components) {
             final types = ((c as Map)['types'] as List?) ?? [];
             final longName = (c['long_name'] as String?) ?? '';
-            if (types.contains('locality')) {
+            if (types.contains('street_number')) {
+              streetNumber = longName;
+            } else if (types.contains('route')) {
+              route = longName;
+            } else if (types.contains('locality')) {
               city = longName;
             } else if (types.contains('sublocality_level_1') && city.isEmpty) {
               city = longName;
+            } else if (types.contains('postal_code')) {
+              postal = longName;
             }
           }
+          final street = [streetNumber, route].where((p) => p.trim().isNotEmpty).join(' ').trim();
 
           // Try zone detection by coordinates first, then city name
           DeliveryZone? zone;
@@ -165,6 +184,9 @@ class _FindMilkRunScreenState extends State<FindMilkRunScreen> {
           zone ??= city.isNotEmpty ? detectZoneByCity(city) : null;
 
           if (zone != null) {
+            _parsedStreet = street;
+            _parsedCity = city;
+            _parsedPostal = postal;
             setState(() {
               _selectedRoute = zone;
               _isSearching = false;
@@ -249,6 +271,9 @@ class _FindMilkRunScreenState extends State<FindMilkRunScreen> {
     // Try exact city match
     final zone = detectZoneByCity(address);
     if (zone != null) {
+      _parsedCity = address;
+      _parsedStreet = '';
+      _parsedPostal = '';
       setState(() {
         _selectedRoute = zone;
         _isSearching = false;
@@ -268,6 +293,11 @@ class _FindMilkRunScreenState extends State<FindMilkRunScreen> {
         _multipleRoutes = possibleZones;
       } else if (possibleZones.length == 1) {
         _selectedRoute = possibleZones.first;
+        _parsedCity = possibleZones.first.cities.isNotEmpty
+            ? possibleZones.first.cities.first
+            : address;
+        _parsedStreet = '';
+        _parsedPostal = '';
       } else {
         _showOutOfArea = true;
       }
@@ -348,6 +378,9 @@ class _FindMilkRunScreenState extends State<FindMilkRunScreen> {
   // ── Route selection (boundary case) ─────────────────────────────────
 
   void _handleRouteSelect(DeliveryZone zone) {
+    _parsedCity = zone.cities.isNotEmpty ? zone.cities.first : '';
+    _parsedStreet = '';
+    _parsedPostal = '';
     setState(() {
       _selectedRoute = zone;
       _multipleRoutes = null;
@@ -369,15 +402,95 @@ class _FindMilkRunScreenState extends State<FindMilkRunScreen> {
 
   // ── Proceed ─────────────────────────────────────────────────────────
 
-  void _handleProceed() {
+  Future<void> _handleProceed() async {
     if (_selectedRoute == null) return;
     // Persist the selected delivery date so checkout picks it up
     final deliveryDate = _getSelectedDeliveryDate();
     if (deliveryDate != null) {
       saveSelectedDeliveryDate(deliveryDate);
+      ref.read(selectedDeliveryDateProvider.notifier).state = deliveryDate;
     }
-                      goRouter.go(AppRoutes.host);
 
+    // Save the address to the backend so it appears in saved addresses
+    await _saveAddressToBackend(deliveryDate);
+
+    goRouter.go(AppRoutes.host);
+  }
+
+  Future<void> _saveAddressToBackend(DateTime? deliveryDate) async {
+    final token = ref.read(authNotifierProvider).value?.data?.token;
+    if (token == null || token.isEmpty) return;
+
+    // Build addressLine from parsed fields or fall back to text field
+    final addressLine = _parsedStreet.isNotEmpty
+        ? '$_parsedStreet, $_parsedCity $_parsedPostal'
+        : _addressController.text.trim();
+    final city = _parsedCity.isNotEmpty
+        ? _parsedCity
+        : (_selectedRoute?.cities.isNotEmpty == true
+            ? _selectedRoute!.cities.first
+            : '');
+    final postal = _parsedPostal;
+    if (city.isEmpty && addressLine.isEmpty) return;
+
+    final user = ref.read(authNotifierProvider).value?.data?.user;
+
+    try {
+      // Always fetch addresses first so we know if one already exists
+      await ref.read(addressProvider.notifier).fetchAddresses(token);
+      final existingAddresses = ref.read(addressProvider).addresses;
+      bool success;
+
+      if (existingAddresses.isNotEmpty) {
+        // Update the first (most recent) existing address
+        final existingId = existingAddresses.first.safeId;
+        success = await ref.read(addressProvider.notifier).updateAddress(
+              token: token,
+              addressId: existingId,
+              addressLine: addressLine,
+              city: city,
+              statess: 'ON',
+              country: 'CA',
+              postalCode: postal,
+              phone: user?.phone ?? '',
+              fullName: user?.name ?? '',
+              deliveryZone: _selectedRoute?.name,
+              deliveryDay: _selectedRoute?.deliveryDay,
+              outOfZoneDate: deliveryDate,
+            );
+      } else {
+        // No existing address — create a new one
+        success = await ref.read(addressProvider.notifier).addAddress(
+              token: token,
+              addressLine: addressLine,
+              city: city,
+              statess: 'ON',
+              country: 'CA',
+              postalCode: postal,
+              phone: user?.phone ?? '',
+              fullName: user?.name ?? '',
+              deliveryZone: _selectedRoute?.name,
+              deliveryDay: _selectedRoute?.deliveryDay,
+              outOfZoneDate: deliveryDate,
+            );
+      }
+
+      if (success) {
+        final addresses = ref.read(addressProvider).addresses;
+        if (addresses.isNotEmpty) {
+          final savedAddress = addresses.first;
+          ref
+              .read(selectedDeliveryAddressProvider.notifier)
+              .selectAddress(savedAddress);
+          // Also persist the delivery date for this specific address
+          if (deliveryDate != null && savedAddress.safeId.isNotEmpty) {
+            saveAddressDeliveryDate(savedAddress.safeId, deliveryDate);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[FindMilkRun] Failed to save address: $e');
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════

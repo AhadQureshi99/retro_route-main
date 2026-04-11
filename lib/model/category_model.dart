@@ -44,6 +44,7 @@ class Category {
   final String? name;
   final String? image;
   final String? parentCategory;
+  final String? parentCategoryName;
   final bool isSubcategory;
   final List<Category> subcategories;
   final DateTime? createdAt;
@@ -55,6 +56,7 @@ class Category {
     this.name,
     this.image,
     this.parentCategory,
+    this.parentCategoryName,
     this.isSubcategory = false,
     this.subcategories = const [],
     this.createdAt,
@@ -63,15 +65,22 @@ class Category {
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
+    String? parentCatId;
+    String? parentCatName;
+    final pc = json['parentCategory'];
+    if (pc is String) {
+      parentCatId = pc;
+    } else if (pc is Map) {
+      parentCatId = pc['_id'] as String?;
+      parentCatName = pc['name'] as String?;
+    }
+
     return Category(
       id: json['_id'] as String?,
       name: json['name'] as String?,
       image: json['image'] as String?,
-      parentCategory: json['parentCategory'] is String
-          ? json['parentCategory'] as String
-          : (json['parentCategory'] is Map
-              ? json['parentCategory']['_id'] as String?
-              : null),
+      parentCategory: parentCatId,
+      parentCategoryName: parentCatName,
       isSubcategory: json['isSubcategory'] == true,
       subcategories: json['subcategories'] != null
           ? List<Category>.from(
@@ -96,6 +105,7 @@ class Category {
       'name': name,
       'image': image,
       'parentCategory': parentCategory,
+      'parentCategoryName': parentCategoryName,
       'isSubcategory': isSubcategory,
       'subcategories': subcategories.map((x) => x.toJson()).toList(),
       'createdAt': createdAt?.toIso8601String(),

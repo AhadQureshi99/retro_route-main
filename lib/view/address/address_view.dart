@@ -125,7 +125,7 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
                                       ? getNextDeliveryDateFromDays(zone.deliveryDays)
                                       : null;
                                   // Use per-address custom date if saved, otherwise auto-compute
-                                  final customDate = _addressDates[addr.safeId];
+                                  final customDate = _addressDates[addr.safeId] ?? addr.outOfZoneDate;
                                   final nextDate = customDate ?? autoDate;
 
                                   return Padding(
@@ -144,7 +144,7 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
                                         // Only reset delivery date when switching to a DIFFERENT address
                                         if (previousId != addr.safeId) {
                                           // Use per-address saved date, or auto-compute
-                                          final savedDate = _addressDates[addr.safeId];
+                                          final savedDate = _addressDates[addr.safeId] ?? addr.outOfZoneDate;
                                           final newZone = detectZoneByCity(addr.safeCity);
                                           final date = savedDate ??
                                               (newZone != null ? getNextDeliveryDateFromDays(newZone.deliveryDays) : null);
@@ -525,8 +525,6 @@ class _AddressCard extends StatelessWidget {
                             fontSize: 14.sp, color: Colors.grey.shade900),
                       ),
                     ],
-                    SizedBox(height: 10.h),
-                    zone != null ? _zoneBadge() : _noZoneWarning(),
                   ],
                 ),
               ),

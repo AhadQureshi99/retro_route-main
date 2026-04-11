@@ -55,6 +55,7 @@ class Order {
   final String paymentStatus;
   final String? stripePaymentIntentId;
   final DeliveryAddress? deliveryAddress;
+  final Map<String, dynamic>? addressSnapshot;
   final String deliveryStatus;
   final String customerNote;
   final DateTime? scheduledDeliveryDate;
@@ -84,6 +85,7 @@ class Order {
     required this.paymentStatus,
     this.stripePaymentIntentId,
     this.deliveryAddress,
+    this.addressSnapshot,
     required this.deliveryStatus,
     required this.customerNote,
     this.scheduledDeliveryDate,
@@ -125,6 +127,9 @@ class Order {
       deliveryAddress: json['deliveryAddress'] != null && json['deliveryAddress'] is Map
           ? DeliveryAddress.fromJson(json['deliveryAddress'] as Map<String, dynamic>)
           : null,
+      addressSnapshot: json['addressSnapshot'] is Map<String, dynamic>
+          ? json['addressSnapshot'] as Map<String, dynamic>
+          : null,
       deliveryStatus: json['deliveryStatus']?.toString() ?? 'Pending',
       customerNote: json['customerNote']?.toString() ?? '',
       scheduledDeliveryDate: json['scheduledDeliveryDate'] != null
@@ -163,6 +168,7 @@ class Order {
         'paymentStatus': paymentStatus,
         'stripePaymentIntentId': stripePaymentIntentId,
         'deliveryAddress': deliveryAddress?.toJson(),
+        'addressSnapshot': addressSnapshot,
         'deliveryStatus': deliveryStatus,
         'customerNote': customerNote,
         'scheduledDeliveryDate': scheduledDeliveryDate?.toIso8601String(),

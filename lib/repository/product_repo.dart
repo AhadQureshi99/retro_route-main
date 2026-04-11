@@ -36,10 +36,10 @@ Future<CategoryModel> getAllCategories() async {
     String endpoint;
 
     if (categoryId != null && categoryId.isNotEmpty) {
-      endpoint = "${AppUrls.getProductByCategory}/$categoryId";
+      endpoint = "${AppUrls.getProductByCategory}/$categoryId?limit=1000";
     } else {
      
-      endpoint = AppUrls.getAllProducts ?? AppUrls.getProductByCategory;
+      endpoint = "${AppUrls.getAllProducts ?? AppUrls.getProductByCategory}?limit=1000";
       log("Fetching ALL products (no category filter)");
     }
 

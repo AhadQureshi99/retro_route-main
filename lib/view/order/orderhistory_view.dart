@@ -270,21 +270,33 @@ class _OrderCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: AppColors.black,
                   ),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 6.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.10),
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: customText(
-                      text: order.deliveryStatus,
-                      fontSize: 13,
-                      color: statusColor,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      customText(
+                        text: "Delivery",
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      SizedBox(height: 2.h),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 6.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        child: customText(
+                          text: order.deliveryStatus,
+                          fontSize: 13,
+                          color: statusColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

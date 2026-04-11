@@ -77,7 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  /// Creates a server-side address from guest onboarding data if present.
+  /// Creates or updates a server-side address from guest onboarding data if present.
   Future<void> _restoreGuestAddressIfNeeded(String token) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -90,16 +90,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       final user = ref.read(authNotifierProvider).value?.data?.user;
 
-      final success = await ref.read(addressProvider.notifier).addAddress(
-        token: token,
-        addressLine: street,
-        city: city,
-        statess: 'ON',
-        country: 'CA',
-        postalCode: postal,
-        phone: user?.phone ?? '',
-        fullName: user?.name ?? '',
-      );
+      // Check if addresses already exist
+      await ref.read(addressProvider.notifier).fetchAddresses(token);
+      final existingAddresses = ref.read(addressProvider).addresses;
+      bool success;
+
+      if (existingAddresses.isNotEmpty) {
+        final existingId = existingAddresses.first.safeId;
+        success = await ref.read(addressProvider.notifier).updateAddress(
+          token: token,
+          addressId: existingId,
+          addressLine: street,
+          city: city,
+          statess: 'ON',
+          country: 'CA',
+          postalCode: postal,
+          phone: user?.phone ?? '',
+          fullName: user?.name ?? '',
+        );
+      } else {
+        success = await ref.read(addressProvider.notifier).addAddress(
+          token: token,
+          addressLine: street,
+          city: city,
+          statess: 'ON',
+          country: 'CA',
+          postalCode: postal,
+          phone: user?.phone ?? '',
+          fullName: user?.name ?? '',
+        );
+      }
 
       if (success) {
         final addresses = ref.read(addressProvider).addresses;
