@@ -945,25 +945,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       color: AppColors.primary,
                     ),
                     SizedBox(height: 8.h),
-                    Html(
-                      data: product.description!,
-                      style: {
-                        "body": Style(
-                          margin: Margins.zero,
-                          padding: HtmlPaddings.zero,
-                          fontSize: FontSize(14.sp),
-                          color: const Color(0xff1f2937),
-                          fontFamily: GoogleFonts.inter().fontFamily,
-                        ),
-                        "b": Style(fontWeight: FontWeight.w700),
-                        "strong": Style(fontWeight: FontWeight.w700),
-                        "ul": Style(margin: Margins.zero, padding: HtmlPaddings.only(left: 16)),
-                        "ol": Style(margin: Margins.zero, padding: HtmlPaddings.only(left: 16)),
-                        "li": Style(
-                          margin: Margins.only(bottom: 4),
-                          fontSize: FontSize(14.sp),
-                        ),
-                      },
+                    Text(
+                      _stripHtml(product.description!),
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        color: const Color(0xff1f2937),
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
@@ -1073,8 +1061,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                   }
                   final cartNotifier = ref.read(cartProvider.notifier);
                   final sizeArg = hasSizes ? selectedSize : null;
-                  // Always use updateQuantity (replace mode) to avoid
-                  // double-tap causing quantity to accumulate via add().
                   final freshCart = ref.read(cartProvider);
                   final freshIndex = freshCart.items.indexWhere(
                     (item) =>
@@ -1082,10 +1068,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                         (item.selectedSize ?? '') == (sizeArg ?? ''),
                   );
                   if (freshIndex != -1) {
+                    final freshQty = freshCart.items[freshIndex].quantity;
                     cartNotifier.updateQuantity(
                       product,
-                      currentQuantity,
+                      freshQty + 1,
                       selectedSize: sizeArg,
+                    );
+                    CustomToast.success(
+                      msg: "${freshQty + 1} × ${product.safeName} in cart",
                     );
                   } else {
                     cartNotifier.add(
@@ -1093,12 +1083,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       quantity: quantity,
                       selectedSize: sizeArg,
                     );
+                    CustomToast.success(
+                      msg: "$quantity × ${product.safeName} added to cart",
+                    );
                   }
-                  CustomToast.success(
-                    msg: isInCart
-                        ? "Cart updated!"
-                        : "$currentQuantity × ${product.safeName} added to cart",
-                  );
                 },
                 icon: Icon(Icons.shopping_cart_outlined, size: 18.sp),
                 label: const Text("Add to Cart"),
