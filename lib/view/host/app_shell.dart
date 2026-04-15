@@ -20,7 +20,7 @@ class AppShell extends ConsumerWidget {
     final isSettingsSheetOpen = ref.watch(settingsSheetOpenProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgColor,
+      backgroundColor: AppColors.primary,
       body: child,
       bottomNavigationBar: IgnorePointer(
         ignoring: isProcessingPayment || isSettingsSheetOpen,

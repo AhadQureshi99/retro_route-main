@@ -13,6 +13,11 @@
         android:name="com.google.android.geo.API_KEY"
         android:value="AIzaSyAM8gpzdHI9FWNzwPQ1kznUYyx1WtT4Mxw"/>
 
+    <!-- Enable Google Pay -->
+    <meta-data
+        android:name="com.google.android.gms.wallet.api.enabled"
+        android:value="true" />
+
     <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
             <intent-filter>

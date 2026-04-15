@@ -1,4 +1,6 @@
 
+import 'dart:developer';
+
 import 'package:retro_route/services/data/network_api_services.dart';
 import 'package:retro_route/utils/app_urls.dart';
 
@@ -15,6 +17,7 @@ class SliderRepo {
           await _apiServices.getApi(AppUrls.getSlider, null);
 
       final sliderResponse = SliderResponse.fromJson(response);
+      log("our slider is $sliderResponse");
       return sliderResponse.data;
     } catch (e) {
       throw Exception('Error fetching slider images: $e');

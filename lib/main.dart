@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,8 +16,9 @@ import 'package:retro_route/utils/app_toast.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  Stripe.publishableKey =
-      "pk_test_51QaZkMHxqEkEAwMAn2bzy8c7nRda7DEtaz1I0L3BtWQ87L132axKb5yvSrdFfiLki6JaOqoty1ViI4NjRtXBGP0700Lr1BctnB";
+  Stripe.publishableKey ="pk_test_51QvmjRKXrxTon6nZc9cm3kNOcYB9zA36mfRFpM5THnMD6KjcQLKwIoiEHnmfUfcTAMgovgXipoFWKC3wHhkCvvat00ZUv7d3xm";
+  Stripe.merchantIdentifier = 'merchant.com.retrorouteco.app';
+  await Stripe.instance.applySettings();
   await NotificationServices.instance.initialize();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   runApp(

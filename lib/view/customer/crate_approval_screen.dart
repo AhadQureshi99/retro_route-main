@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -103,12 +104,40 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
         return;
       }
 
+      final isStripeTestMode = true;
+      final googlePayCurrency =
+          (result['currency']?.toString().trim().isNotEmpty ?? false)
+              ? result['currency'].toString().trim().toUpperCase()
+              : 'CAD';
+      final googlePaySupported =
+          defaultTargetPlatform == TargetPlatform.android
+              ? await Stripe.instance.isPlatformPaySupported()
+              : false;
+      if (defaultTargetPlatform == TargetPlatform.android &&
+          !googlePaySupported) {
+        debugPrint(
+          '[Stripe] Google Pay is not available on this device/profile.',
+        );
+      }
+
       try {
         // Initialize Stripe Payment Sheet
         await Stripe.instance.initPaymentSheet(
           paymentSheetParameters: SetupPaymentSheetParameters(
             paymentIntentClientSecret: clientSecret,
             merchantDisplayName: 'Retro Route Co',
+            applePay: defaultTargetPlatform == TargetPlatform.iOS
+                ? const PaymentSheetApplePay(
+                    merchantCountryCode: 'CA',
+                  )
+                : null,
+            googlePay: defaultTargetPlatform == TargetPlatform.android
+                ? PaymentSheetGooglePay(
+                    merchantCountryCode: 'CA',
+                    currencyCode: googlePayCurrency,
+                    testEnv: isStripeTestMode,
+                  )
+                : null,
             billingDetails: const BillingDetails(
               address: Address(
                 city: '',

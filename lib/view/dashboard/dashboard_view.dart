@@ -24,11 +24,10 @@ import 'package:retro_route/view_model/product_view_model/product_view_model.dar
 import 'package:retro_route/view_model/slider_view_model/slider_view_model.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:retro_route/services/notification_service.dart';
-import 'package:retro_route/view/dashboard/widgets/water_test_popup.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/view_model/notification_view_model/notification_view_model.dart';
 import 'package:retro_route/view_model/water_test_view_model/water_test_view_model.dart';
-import 'package:retro_route/view/splash/q_onboarding_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeDashboardScreen extends ConsumerStatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -272,6 +271,31 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   void _hideFilterOverlay() {
     _filterOverlay?.remove();
     _filterOverlay = null;
+  }
+
+  Future<void> _openSliderLink(String rawLink) async {
+    final trimmed = rawLink.trim();
+    if (trimmed.isEmpty) return;
+
+    final normalized =
+        trimmed.startsWith('http://') || trimmed.startsWith('https://')
+            ? trimmed
+            : 'https://$trimmed';
+
+    final uri = Uri.tryParse(normalized);
+    if (uri == null) {
+      CustomToast.warning(msg: 'Invalid slider link');
+      return;
+    }
+
+    final launched = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!launched) {
+      CustomToast.warning(msg: 'Could not open link');
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -784,36 +808,41 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                     margin: EdgeInsets.symmetric(
                                       horizontal: 6.w,
                                     ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12.r),
-                                      child: CachedNetworkImage(
-                                        imageUrl: slider.image,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        placeholder: (context, url) =>
-                                            Shimmer.fromColors(
-                                              baseColor: Colors.grey[300]!,
-                                              highlightColor: Colors.grey[100]!,
-                                              child: Container(
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                        errorWidget: (context, url, error) =>
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xffF0F0F0),
-                                                borderRadius:
-                                                    BorderRadius.circular(12.r),
-                                              ),
-                                              child: Center(
-                                                child: Icon(
-                                                  Icons.image_not_supported_outlined,
-                                                  size: 40.sp,
-                                                  color: Colors.grey[400],
+                                    child: GestureDetector(
+                                      onTap: slider.link.trim().isEmpty
+                                          ? null
+                                          : () => _openSliderLink(slider.link),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12.r),
+                                        child: CachedNetworkImage(
+                                          imageUrl: slider.image,
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                          placeholder: (context, url) =>
+                                              Shimmer.fromColors(
+                                                baseColor: Colors.grey[300]!,
+                                                highlightColor: Colors.grey[100]!,
+                                                child: Container(
+                                                  color: Colors.white,
                                                 ),
                                               ),
-                                            ),
+                                          errorWidget: (context, url, error) =>
+                                              Container(
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xffF0F0F0),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12.r),
+                                                ),
+                                                child: Center(
+                                                  child: Icon(
+                                                    Icons.image_not_supported_outlined,
+                                                    size: 40.sp,
+                                                    color: Colors.grey[400],
+                                                  ),
+                                                ),
+                                              ),
+                                        ),
                                       ),
                                     ),
                                   );

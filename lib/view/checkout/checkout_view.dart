@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -16,7 +19,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
 import 'package:retro_route/utils/app_toast.dart';
-import 'package:retro_route/view/address/address_view.dart';
 import 'package:retro_route/view_model/address_view_model/address_view_model.dart';
 import 'package:retro_route/view_model/address_view_model/selected_delivery_address_view_model.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
@@ -680,11 +682,50 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     isOutOfZone: _isOutOfZone,
                   );
 
-              // Initialize Payment Sheet
+              final googlePayCurrency = orderData.currency.trim().isEmpty
+                  ? 'CAD'
+                  : orderData.currency.trim().toUpperCase();
+              final googlePaySupported =
+                  defaultTargetPlatform == TargetPlatform.android
+                      ? await Stripe.instance.isPlatformPaySupported()
+                      : false;
+
+log('✅ Google Pay Supported: $googlePaySupported');
+              if (defaultTargetPlatform == TargetPlatform.android &&
+                  !googlePaySupported) {
+                log(
+                  '[Stripe] Google Pay is not available on this device/profile.',
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Google Pay not available on this device. Install Google Wallet app & add a payment method.'),
+                      duration: Duration(seconds: 5),
+                    ),
+                  );
+                }
+              }
+
               await Stripe.instance.initPaymentSheet(
                 paymentSheetParameters: SetupPaymentSheetParameters(
                   paymentIntentClientSecret: orderData.clientSecret,
                   merchantDisplayName: 'Retro Route Co',
+
+                  applePay: defaultTargetPlatform == TargetPlatform.iOS
+                      ? const PaymentSheetApplePay(
+                          merchantCountryCode: 'CA',
+                        )
+                      : null,
+                  googlePay: defaultTargetPlatform == TargetPlatform.android
+                      ? PaymentSheetGooglePay(
+                        buttonType: PlatformButtonType.pay,
+                        
+                          merchantCountryCode: 'CA',
+                          currencyCode: googlePayCurrency,
+                          testEnv: true,
+                    
+                        )
+                      : null,
                   billingDetails: const BillingDetails(
                     address: Address(
                       city: '',

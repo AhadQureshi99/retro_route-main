@@ -2,6 +2,7 @@ class SliderItem {
   final String id;
   final String image;
   final String title;
+  final String link;
   final bool isActive;
   final int order;
 
@@ -9,6 +10,7 @@ class SliderItem {
     required this.id,
     required this.image,
     required this.title,
+    required this.link,
     required this.isActive,
     required this.order,
   });
@@ -18,6 +20,7 @@ class SliderItem {
       id: json['_id'] ?? '',
       image: json['image'] ?? '',
       title: json['title'] ?? '',
+      link: (json['link'] ?? '').toString(),
       isActive: json['isActive'] ?? false,
       order: json['order'] ?? 0,
     );
