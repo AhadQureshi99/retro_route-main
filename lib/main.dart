@@ -16,7 +16,7 @@ import 'package:retro_route/utils/app_toast.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  Stripe.publishableKey ="pk_test_51QvmjRKXrxTon6nZc9cm3kNOcYB9zA36mfRFpM5THnMD6KjcQLKwIoiEHnmfUfcTAMgovgXipoFWKC3wHhkCvvat00ZUv7d3xm";
+  Stripe.publishableKey ="pk_live_51TFeYZEYQdZa8ymcjUMpbf7WeiiVwn0Mw96a8bo7rmCfChiNHXhnctNYIyNvFj80QVvuRX4FcqHXXArhxBZt0uue00fK9SFslZ";
   Stripe.merchantIdentifier = 'merchant.com.retrorouteco.app';
   await Stripe.instance.applySettings();
   await NotificationServices.instance.initialize();
