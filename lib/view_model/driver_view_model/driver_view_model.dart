@@ -275,18 +275,21 @@ class DriverDeliveriesNotifier extends Notifier<DriverDeliveriesState> {
       final results = await Future.wait([
         repo.fetchMyDeliveries(token: token, status: 'Pending'),
         repo.fetchMyDeliveries(token: token, status: 'On My Way'),
+        repo.fetchMyDeliveries(token: token, status: 'water_tested'),
         repo.fetchMyDeliveries(token: token, status: 'Delivered'),
         repo.fetchDriverStats(token: token, dateFilter: today),
       ]);
 
       final pendingResponse = results[0] as DriverDeliveriesResponse;
       final onMyWayResponse = results[1] as DriverDeliveriesResponse;
-      final deliveredResponse = results[2] as DriverDeliveriesResponse;
-      final statsResponse = results[3] as DriverStatsResponse;
+      final waterTestedResponse = results[2] as DriverDeliveriesResponse;
+      final deliveredResponse = results[3] as DriverDeliveriesResponse;
+      final statsResponse = results[4] as DriverStatsResponse;
 
       final List<DriverDelivery> allActive = [
         ...(pendingResponse.data ?? <DriverDelivery>[]),
         ...(onMyWayResponse.data ?? <DriverDelivery>[]),
+        ...(waterTestedResponse.data ?? <DriverDelivery>[]),
       ];
 
       state = state.copyWith(
@@ -448,6 +451,11 @@ class DriverDeliveriesNotifier extends Notifier<DriverDeliveriesState> {
       );
     }
     state = state.copyWith(generatedCrate: crate);
+  }
+
+  /// Restore crate items from backend data (used when resuming after app restart)
+  void restoreCrate(List<CrateItem> items) {
+    state = state.copyWith(generatedCrate: items);
   }
 
   /// Clear water test and crate state

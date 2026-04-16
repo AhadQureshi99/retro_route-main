@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,10 +6,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:retro_route/repository/order_repo.dart';
 import 'package:retro_route/utils/app_colors.dart';
 import 'package:retro_route/utils/app_routes.dart';
 import 'package:retro_route/utils/app_toast.dart';
+import 'package:retro_route/utils/app_urls.dart';
 import 'package:retro_route/view_model/auth_view_model/login_view_model.dart';
 import 'package:retro_route/view_model/crate_view_model/crate_view_model.dart';
 
@@ -135,7 +138,7 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
                 ? PaymentSheetGooglePay(
                     merchantCountryCode: 'CA',
                     currencyCode: googlePayCurrency,
-                    testEnv: isStripeTestMode,
+                    testEnv: true,
                   )
                 : null,
             billingDetails: const BillingDetails(
@@ -154,13 +157,20 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
         // Present Payment Sheet
         await Stripe.instance.presentPaymentSheet();
 
-        // Confirm payment with backend
+        // Confirm crate payment with dedicated endpoint
         try {
-          await ref.read(orderRepoProvider).confirmPayment(
-                token: token,
-                orderId: orderId,
-              );
-        } catch (_) {}
+          final uri = Uri.parse(AppUrls.confirmCratePayment(orderId));
+          await http.Client().put(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ${token.trim()}',
+            },
+          ).timeout(const Duration(seconds: 30));
+        } catch (e) {
+          debugPrint('[CratePayment] confirm failed: $e');
+        }
 
         CustomToast.success(msg: 'Payment successful! Your crate is confirmed.');
 
@@ -214,14 +224,14 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
   Future<void> _decline() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text('Decline Crate?', style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
         content: Text('Are you sure you want to decline all recommended products?',
             style: GoogleFonts.inter()),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: Text('Decline', style: TextStyle(color: Colors.red[700])),
           ),
         ],
@@ -239,6 +249,9 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Crate declined'), backgroundColor: Colors.orange));
       context.go(AppRoutes.host);
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Failed to decline crate. Please try again.'), backgroundColor: Colors.red));
     }
   }
 

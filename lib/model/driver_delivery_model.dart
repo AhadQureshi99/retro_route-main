@@ -184,6 +184,7 @@ class DriverDelivery {
   String get formattedCrateTotal => '\$${safeCrateTotal.toStringAsFixed(2)}';
   String? get crateStatus => pendingCrate?['status'] as String?;
   bool get crateApproved => crateStatus == 'paid' || crateStatus == 'delivered';
+  bool get crateDeclined => crateStatus == 'declined';
   bool get cratePending => crateStatus == 'pending_approval';
 
   List<Map<String, dynamic>> get crateApprovedItems {

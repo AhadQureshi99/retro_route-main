@@ -52,6 +52,7 @@ class AppUrls {
   static String pendingCrate(String orderId) => "$baseUrl/api/v1/water-test/pending-crate/$orderId";
   static String approveCrate(String orderId) => "$baseUrl/api/v1/water-test/approve-crate/$orderId";
   static String declineCrate(String orderId) => "$baseUrl/api/v1/water-test/decline-crate/$orderId";
+  static String confirmCratePayment(String orderId) => "$baseUrl/api/v1/water-test/confirm-crate-payment/$orderId";
   static String poolReport(String orderId) => "$baseUrl/api/v1/water-test/pool-report/$orderId";
   static const String myPoolReports = "$baseUrl/api/v1/water-test/my-reports";
 

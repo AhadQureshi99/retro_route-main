@@ -64,8 +64,22 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     if (token.isNotEmpty) {
       // Update driver location first so deliveries are sorted nearest-first
       ref.read(driverDeliveriesProvider.notifier).updateDriverLocation().then((_) {
-        ref.read(driverDeliveriesProvider.notifier).fetchAllData(token);
+        ref.read(driverDeliveriesProvider.notifier).fetchAllData(token).then((_) {
+          if (!mounted) return;
+          _checkPendingCrateResume();
+        });
       });
+    }
+  }
+
+  /// If any active delivery has a crate with 'pending_approval' status,
+  /// auto-navigate the driver back to the crate screen so they don't lose
+  /// their place after closing/reopening the app.
+  void _checkPendingCrateResume() {
+    final deliveries = ref.read(driverDeliveriesProvider).activeDeliveries;
+    final pending = deliveries.where((d) => d.cratePending).firstOrNull;
+    if (pending != null && mounted) {
+      goRouter.push(AppRoutes.driverCrate, extra: pending);
     }
   }
 

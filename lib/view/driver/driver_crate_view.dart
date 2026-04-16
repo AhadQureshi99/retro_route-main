@@ -28,6 +28,29 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
   bool _navigatedToDeliver = false; // guard against double-push
 
   @override
+  void initState() {
+    super.initState();
+    // If reopening the screen for a delivery already submitted (pending_approval),
+    // resume polling automatically and restore crate items from backend data.
+    if (widget.delivery.cratePending) {
+      _submitted = true;
+      _waitingApproval = true;
+      _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _checkApproval());
+
+      // Restore generatedCrate from the delivery's pendingCrate items
+      final items = widget.delivery.crateApprovedItems;
+      if (items.isNotEmpty) {
+        final restored = items
+            .map((m) => CrateItem.fromMap(m))
+            .toList();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(driverDeliveriesProvider.notifier).restoreCrate(restored);
+        });
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _pollTimer?.cancel();
     _pollTimer = null;
@@ -79,6 +102,30 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
       if (mounted) {
         // Use pushReplacement so the crate screen is disposed (kills any residual state)
         context.pushReplacement(AppRoutes.driverDeliver, extra: updated);
+      }
+    } else if (updated != null && updated.crateDeclined) {
+      _navigatedToDeliver = true;
+      _pollTimer?.cancel();
+      _pollTimer = null;
+      setState(() => _waitingApproval = false);
+      if (mounted) {
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Crate Declined'),
+            content: const Text('The customer has declined the recommended crate.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        if (mounted) {
+          context.go(AppRoutes.driverHome);
+        }
       }
     }
   }
