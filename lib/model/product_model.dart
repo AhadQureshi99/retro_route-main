@@ -102,6 +102,7 @@ class Product {
   final List<ProductSize>? sizes;
   final List<String>? keyFeatures;
   final bool? isService;
+  final bool? isFeatured;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final int? v;
@@ -124,6 +125,7 @@ class Product {
     this.sizes,
     this.keyFeatures,
     this.isService,
+    this.isFeatured,
     this.createdAt,
     this.updatedAt,
     this.v,
@@ -175,6 +177,7 @@ class Product {
           ? List<String>.from(json['keyFeatures'] as List)
           : null,
       isService: json['isService'] as bool?,
+      isFeatured: json['isFeatured'] as bool?,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String)
           : null,
@@ -202,6 +205,7 @@ class Product {
       'sizes': sizes?.map((s) => s.toJson()).toList(),
       'keyFeatures': keyFeatures,
       'isService': isService,
+      'isFeatured': isFeatured,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       '__v': v,

@@ -15,6 +15,7 @@ class AppUrls {
   static const String getAllCategories = "$baseUrl/api/v1/category/get-all-categories";
   static const String getProductByCategory = "$baseUrl/api/v1/product/category";
   static const String getAllProducts = "$baseUrl/api/v1/product/get-all-products";
+  static const String getFeaturedProducts = "$baseUrl/api/v1/product/featured";
 
 // ? favrouties items
   static const String addToFavourites = "$baseUrl/api/v1/favorite/add";

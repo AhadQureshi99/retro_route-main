@@ -309,11 +309,85 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     ref.invalidate(sliderProvider);
     ref.invalidate(categoriesProvider);
     ref.invalidate(productsProvider(null));
+    ref.invalidate(featuredProductsProvider);
     // Wait for categories + products to finish loading (ignore individual errors)
     await Future.wait([
       ref.read(categoriesProvider.future).then<void>((_) {}).catchError((_) {}),
       ref.read(productsProvider(null).future).then<void>((_) {}).catchError((_) {}),
     ]);
+  }
+
+  Widget _buildHotDealsSection() {
+    final featuredAsync = ref.watch(featuredProductsProvider);
+    final cart = ref.watch(cartProvider);
+
+    return featuredAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (response) {
+        final products = response.data?.products ?? [];
+        if (products.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            verticalSpacer(height: 8),
+            Row(
+              children: [
+                Icon(Icons.local_fire_department, color: Colors.deepOrange, size: 24.sp),
+                SizedBox(width: 6.w),
+                customText(
+                  text: "Hot Deals",
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xff111827),
+                ),
+              ],
+            ),
+            verticalSpacer(height: 10),
+            SizedBox(
+              height: 300.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: products.length,
+                separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return SizedBox(
+                    width: 175.w,
+                    child: ProductCard(
+                      product: product,
+                      onTap: () {
+                        goRouter.push(AppRoutes.productdetails, extra: product);
+                      },
+                      onAddToCart: () {
+                        if ((product.status ?? '') == 'Out of Stock' ||
+                            (product.stock ?? 0) <= 0) {
+                          CustomToast.error(
+                              msg: '${product.safeName} is out of stock');
+                          return;
+                        }
+                        final isInCart = cart.items
+                            .any((item) => item.product.id == product.id);
+                        if (isInCart) {
+                          CustomToast.warning(
+                              msg: '${product.safeName} is already in cart');
+                        } else {
+                          ref.read(cartProvider.notifier).add(product, quantity: 1);
+                          CustomToast.success(
+                              msg: '${product.safeName} added to cart');
+                        }
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+            verticalSpacer(height: 12),
+          ],
+        );
+      },
+    );
   }
 
   Widget _featureItem({
@@ -962,6 +1036,10 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                           ],
                         ),
                       ),
+
+                      // ── Hot Deals Section ──────────────────────
+                      _buildHotDealsSection(),
+
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,

@@ -490,6 +490,37 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
                   ),
                 ),
 
+              // Price Breakdown
+              if (widget.delivery.pendingCrate != null)
+                DriverInfoCard(
+                  title: 'Price Breakdown',
+                  icon: Icons.receipt_long,
+                  children: [
+                    _buildPriceRow(
+                      'Crate Subtotal',
+                      '\$${((widget.delivery.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
+                    ),
+                    if ((widget.delivery.pendingCrate!['credit'] as num?)?.toDouble() != null &&
+                        (widget.delivery.pendingCrate!['credit'] as num).toDouble() > 0)
+                      _buildPriceRow(
+                        'Water Test Credit (incl. HST)',
+                        '\$-${(widget.delivery.pendingCrate!['credit'] as num).toDouble().toStringAsFixed(2)}',
+                        valueColor: DriverColors.green,
+                      ),
+                    _buildPriceRow(
+                      'HST (13%)',
+                      '\$${((widget.delivery.pendingCrate!['hst'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
+                    ),
+                    Divider(height: 16.h, color: DriverColors.bg),
+                    _buildPriceRow(
+                      'Crate Total',
+                      '\$${((widget.delivery.pendingCrate!['total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
+                      isBold: true,
+                      valueColor: DriverColors.green,
+                    ),
+                  ],
+                ),
+
               // Checklist
               DriverInfoCard(
                 title: 'Checklist',
@@ -611,6 +642,30 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
           ),
         ),
       ]),
+    );
+  }
+
+  Widget _buildPriceRow(String label, String value,
+      {bool isBold = false, Color? valueColor}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: GoogleFonts.inter(
+                fontSize: 13.sp,
+                fontWeight: isBold ? FontWeight.w800 : FontWeight.w500,
+                color: DriverColors.text,
+              )),
+          Text(value,
+              style: GoogleFonts.inter(
+                fontSize: 13.sp,
+                fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
+                color: valueColor ?? DriverColors.text,
+              )),
+        ],
+      ),
     );
   }
 }

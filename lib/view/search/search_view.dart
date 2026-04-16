@@ -513,10 +513,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
                           physics: const NeverScrollableScrollPhysics(),
                           gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-           maxCrossAxisExtent: 200.w,
-                                  mainAxisExtent: 340.w,
-                                  crossAxisSpacing: 4.w,
-                                  mainAxisSpacing: 16.h,
+                            maxCrossAxisExtent: 200.w,
+                            mainAxisExtent: 300.h,
+                            crossAxisSpacing: 12.w,
+                            mainAxisSpacing: 16.h,
                           ),
                           itemCount: filteredProducts.length,
                           itemBuilder: (context, index) {

@@ -210,7 +210,8 @@ class _DriverOrderDetailScreenState
         : '—';
     final statusColor = _getStatusColor(delivery.deliveryStatus);
     final isPending = delivery.deliveryStatus?.toLowerCase() == 'pending' ;
-    final isOnMyWay = delivery.deliveryStatus?.toLowerCase() == 'on my way';
+    final isOnMyWay = delivery.deliveryStatus?.toLowerCase() == 'on my way' ||
+        delivery.deliveryStatus?.toLowerCase() == 'water_tested';
     final isDelivered = delivery.deliveryStatus?.toLowerCase() == 'delivered';
 
     return Scaffold(

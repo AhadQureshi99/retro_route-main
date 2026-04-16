@@ -360,6 +360,7 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
       onTap: () => setState(() {
         _waterType = value;
         _volumeId = null; _volumeLiters = null; _customVolCtrl.clear();
+        _lastDrain = null;
         _sanitizerType = value == 'hot_tub' ? 'bromine' : (value == 'both' ? 'chlorine' : 'chlorine');
       }),
       child: Container(

@@ -57,5 +57,19 @@ Future<CategoryModel> getAllCategories() async {
 }
 
 
-
+  Future<ProductResponse> getFeaturedProducts() async {
+    try {
+      final response = await _apiServices.getApi(
+        '${AppUrls.getFeaturedProducts}?limit=20',
+        null,
+      );
+      if (response is! Map<String, dynamic>) {
+        throw Exception("Unexpected response type: ${response.runtimeType}");
+      }
+      return ProductResponse.fromJson(response);
+    } catch (e, stack) {
+      log("getFeaturedProducts failed", error: e, stackTrace: stack);
+      rethrow;
+    }
+  }
 }

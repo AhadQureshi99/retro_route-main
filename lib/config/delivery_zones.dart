@@ -45,19 +45,22 @@ final List<DeliveryZone> deliveryZones = [
     deliveryDays: ['Monday', 'Thursday'],
     color: const Color(0xFFef4444), // red
     cities: [
-      'Avonmore', 'Baldwins Bridge', 'Brinston', 'Brockville', 'Cardinal',
-      'Charleville', 'Chesterville', 'Cornwall', 'Cornwall Island',
-      'Dixons Corners', 'Domville', 'Dundela', 'Finch', 'Glen Becker',
-      'Glen Small', 'Glen Stewart', 'Groveton', 'Haddo', 'Hallville',
-      'Hanesville', 'Heckston', 'Hulbert', 'Hyndmans Ridge', 'Ingleside',
-      'Inkerman', 'Irena', 'Iroquois', 'Johnstown', 'Kemptville',
-      'Lunenburg', 'Mainsville', 'Mariatown', 'Maynard', 'McCarleys Corners',
-      'Millars Corners', 'Monkland', 'Morrisburg', 'Mountain', 'Muttonville',
-      'Newington', 'Oak Valley', 'Oxford Station', 'Peltons Corner',
-      'Perkins Corners', 'Pittston', 'Prescott', 'Roebuck',
-      'Rosedale Terrace', 'Shanly', 'South Mountain', 'Sparkle City',
-      'Spencerville', 'St Andrews West', 'Toyes Hill', 'Upper Canada Village',
-      'Ventnor', 'Waddington', 'Wexford', 'Williamsburg', 'Winchester',
+      'Aultsville', 'Avonmore', 'Baldwins Bridge', 'Berwick', 'Bonville',
+      'Brinston', 'Brockville', 'Cardinal', 'Charleville', 'Chesterville',
+      'Cornwall', 'Cornwall Island', "Dickinson's Landing", 'Dixons Corners',
+      'Domville', 'Dunbar', 'Dundela', 'Elma', 'Elmas Corners', 'Finch',
+      'Gallingertown', 'Glen Becker', 'Glen Small', 'Glen Stewart',
+      'Groveton', 'Haddo', 'Hallville', 'Hanesville', 'Harrisons Corners',
+      'Heckston', 'Hulbert', 'Hyndmans Ridge', 'Ingleside', 'Inkerman',
+      'Irena', 'Iroquois', 'Johnstown', 'Kemptville', 'Long Sault',
+      'Lunenburg', 'Mainsville', 'Maitland', 'Mariatown', 'Maynard',
+      'McCarleys Corners', 'Millars Corners', 'Monkland', 'Morrisburg',
+      'Mountain', 'Muttonville', 'Newington', 'North Mountain', 'Oak Valley',
+      'Osnabruck Centre', 'Peltons Corner', 'Perkins Corners', 'Pittston',
+      'Prescott', 'Riverside Heights', 'Roebuck', 'Rosedale Terrace',
+      'Shanly', 'South Mountain', 'Sparkle City', 'Spencerville',
+      'St Andrews West', 'Toyes Hill', 'Upper Canada Village', 'Van Camp',
+      'Ventnor', 'Wales', 'Wexford', 'Williamsburg', 'Winchester',
       'Winchester Springs',
     ],
     cityMarkers: [
@@ -102,17 +105,19 @@ final List<DeliveryZone> deliveryZones = [
     color: const Color(0xFF06b6d4), // cyan
     cities: [
       'Actons Corners', 'Addison', 'Algonquin', 'Andrewsville', 'Athens',
-      'Bellamys', 'Bellamys Mill', 'Bells Crossing', 'Beveridge Locks',
-      'Bishops Mills', 'Blanchards Hill', 'Burritts Rapids', 'Carleys Corner',
-      'Crystal', 'East Oxford', 'Eastons Corners', 'Elmgrove', 'Eloida',
-      'Frankville', 'Glen Elbe', 'Glen Tay', 'Glenview', 'Greenbush',
-      'Jasper', 'Jellyby', 'Judgeville', 'Kilmarnock', 'Lehighs Corners',
-      'Lombardy', 'Merrickville-Wolford', 'Motts Mills', 'New Dublin',
-      'Newbliss', 'Newmanville', 'Nolans Corners', 'North Augusta',
-      'Numogate', 'Oxford Mills', 'Perth', 'Plum Hollow', 'Rideau Ferry',
+      'Bellamy', 'Bellamys', 'Bellamys Mill', 'Bells Crossing',
+      'Beveridge Locks', 'Bishops Mills', 'Blanchards Hill',
+      'Burritts Rapids', 'Carleys Corner', 'Crystal', 'East Oxford',
+      'Eastons Corners', 'Elmgrove', 'Eloida', 'Frankville', 'Glen Elbe',
+      'Glen Tay', 'Glenview', 'Greenbush', 'Jasper', 'Jellyby',
+      'Judgeville', 'Kilmarnock', 'Lehighs Corners', 'Lombardy', 'Lyn',
+      'Merrickville', 'Merrickville-Wolford', 'Motts Mills', 'New Dublin',
+      'Newbliss', 'Newboyne', 'Newmanville', 'Nolans Corners',
+      'North Augusta', 'Numogate', 'Oxford Mills', 'Oxford Station',
+      'Perth', 'Plum Hollow', 'Port Elmsley', 'Rideau Ferry',
       'Rocksprings', 'Shanes', 'Smiths Falls', 'Snowdons Corners',
       'South Augusta', 'South Branch', 'Swan Crossing', 'Throoptown',
-      'Tincap', 'Toledo', 'Wolford Chapel',
+      'Tincap', 'Toledo', 'Wolford', 'Wolford Chapel',
     ],
     cityMarkers: [
       CityMarker(name: 'Smiths Falls',        position: const LatLng(44.9042, -76.0092)),
@@ -138,16 +143,19 @@ final List<DeliveryZone> deliveryZones = [
     deliveryDays: ['Tuesday', 'Friday'],
     color: const Color(0xFFeab308), // yellow
     cities: [
-      'Ballycanoe', 'Bayridge', 'Butternut Bay', 'Caintown',
-      'Cataraqui/Westbrook', 'CFB Kingston', 'Cheeseborough', 'Darlingside',
-      'Ebenezer', 'Elizabethtown-Kitley', 'Emery', 'Gananoque',
-      'Gananoque Junction', 'Glenburnie', "Gray's Beach", 'Halsteads Bay',
-      'Hill Island', 'Howe Island', 'Ivy Lea', 'Joyceville', 'Junetown',
-      'Kingston', 'Lansdowne', 'Legge', 'Lyn', 'Mallorytown',
-      'Mallorytown Landing', 'Maple Grove', 'Marble Rock', 'McIntosh Mills',
-      'Pitts Ferry', 'Pittsburgh', 'Rapid Valley', 'Rideau Heights',
-      'Rockport', 'Selton', 'Taylor', 'Waterton', 'Willowbank', 'Wilstead',
-      'Woodridge', 'Yonge Mills',
+      'Amherstview', 'Ballycanoe', 'Barriefield', 'Bayridge', 'Browns Bay',
+      'Butternut Bay', 'Caintown', 'Cataraqui', 'Cataraqui/Westbrook',
+      'CFB Kingston', 'Cheeseborough', 'Collins Bay', 'Darlingside',
+      'Ebenezer', 'Elizabethtown-Kitley', 'Emery', 'Escott', 'Frontenac',
+      'Gananoque', 'Gananoque Junction', 'Glenburnie', "Gray's Beach",
+      'Grenadier Village', 'Halsteads Bay', 'Hill Island', 'Howe Island',
+      'Ivy Lea', 'Joyceville', 'Junetown', 'Kingston', 'Lansdowne',
+      'Legge', 'Long Beach', 'Mallorytown', 'Mallorytown Landing',
+      'Maple Grove', 'Marble Rock', 'McIntosh Mills', 'New Dublin Rd',
+      'Pitts Ferry', 'Pittsburgh', 'Rapid Valley', 'Reddendale',
+      'Rideau Heights', 'Rockfield', 'Rockport', 'Selton', 'Taylor',
+      'Treasure Island', 'Trevelyan', 'Waterton', 'Westbrook',
+      'Willowbank', 'Wilstead', 'Woodridge', 'Yonge Mills',
     ],
     cityMarkers: [
       CityMarker(name: 'Kingston',   position: const LatLng(44.2312, -76.486)),
@@ -225,7 +233,8 @@ LatLng polygonCenter(List<LatLng> polygon) {
   return LatLng(latSum / polygon.length, lngSum / polygon.length);
 }
 
-/// Returns the next calendar date on which [dayName] falls.
+/// Returns the next calendar date on which [dayName] falls,
+/// respecting 12 PM noon cutoff (day before delivery).
 DateTime getNextDeliveryDate(String dayName) {
   const days = [
     'Sunday', 'Monday', 'Tuesday', 'Wednesday',
@@ -233,21 +242,43 @@ DateTime getNextDeliveryDate(String dayName) {
   ];
   final target = days.indexOf(dayName);
   if (target == -1) return DateTime.now();
-  final today = DateTime.now();
-  int diff = target - today.weekday % 7;
-  if (diff <= 0) diff += 7;
-  return today.add(Duration(days: diff));
+  final now = DateTime.now();
+  const cutoffHour = 12; // noon
+
+  for (int i = 0; i <= 13; i++) {
+    final candidate = DateTime(now.year, now.month, now.day + i);
+    if (candidate.weekday % 7 != target) continue;
+    // Cutoff is noon the day before this delivery day
+    final cutoff = DateTime(candidate.year, candidate.month, candidate.day - 1, cutoffHour);
+    if (now.isBefore(cutoff)) return candidate;
+  }
+  return DateTime.now();
 }
 
-/// Returns the soonest upcoming delivery date from a list of day names.
+/// Returns the soonest upcoming delivery date from a list of day names,
+/// respecting 12 PM noon cutoff.
 DateTime getNextDeliveryDateFromDays(List<String> dayNames) {
   if (dayNames.isEmpty) return DateTime.now();
-  DateTime nearest = getNextDeliveryDate(dayNames.first);
-  for (int i = 1; i < dayNames.length; i++) {
-    final d = getNextDeliveryDate(dayNames[i]);
-    if (d.isBefore(nearest)) nearest = d;
+  const days = [
+    'Sunday', 'Monday', 'Tuesday', 'Wednesday',
+    'Thursday', 'Friday', 'Saturday',
+  ];
+  final targetDayNums = dayNames
+      .map((d) => days.indexOf(d))
+      .where((i) => i >= 0)
+      .toList();
+  if (targetDayNums.isEmpty) return DateTime.now();
+
+  final now = DateTime.now();
+  const cutoffHour = 12;
+
+  for (int i = 0; i <= 13; i++) {
+    final candidate = DateTime(now.year, now.month, now.day + i);
+    if (!targetDayNums.contains(candidate.weekday % 7)) continue;
+    final cutoff = DateTime(candidate.year, candidate.month, candidate.day - 1, cutoffHour);
+    if (now.isBefore(cutoff)) return candidate;
   }
-  return nearest;
+  return DateTime.now();
 }
 
 /// Returns the delivery date TWO weeks from now on [dayName] (the one after next).
@@ -256,13 +287,33 @@ DateTime getSecondDeliveryDate(String dayName) {
   return first.add(const Duration(days: 7));
 }
 
-/// Returns the second soonest delivery date from a list of day names.
+/// Returns the second soonest delivery date from a list of day names,
+/// respecting cutoff.
 DateTime getSecondDeliveryDateFromDays(List<String> dayNames) {
   if (dayNames.isEmpty) return DateTime.now();
-  // Get all upcoming dates, sort, pick the second one
-  final upcoming = dayNames.map((d) => getNextDeliveryDate(d)).toList()..sort();
-  if (upcoming.length >= 2) return upcoming[1];
-  // If only one day, use the week after
+  const days = [
+    'Sunday', 'Monday', 'Tuesday', 'Wednesday',
+    'Thursday', 'Friday', 'Saturday',
+  ];
+  final targetDayNums = dayNames
+      .map((d) => days.indexOf(d))
+      .where((i) => i >= 0)
+      .toList();
+
+  final now = DateTime.now();
+  const cutoffHour = 12;
+  final results = <DateTime>[];
+
+  for (int i = 0; i <= 20; i++) {
+    final candidate = DateTime(now.year, now.month, now.day + i);
+    if (!targetDayNums.contains(candidate.weekday % 7)) continue;
+    final cutoff = DateTime(candidate.year, candidate.month, candidate.day - 1, cutoffHour);
+    if (now.isBefore(cutoff)) {
+      results.add(candidate);
+      if (results.length >= 2) return results[1];
+    }
+  }
+  if (results.isNotEmpty) return results[0].add(const Duration(days: 7));
   return getSecondDeliveryDate(dayNames.first);
 }
 

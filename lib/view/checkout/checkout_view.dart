@@ -134,11 +134,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final targetDays = _detectedZone!.deliveryDays.map((d) => days.indexOf(d.toLowerCase())).where((i) => i >= 0).toList();
     if (targetDays.isEmpty) return [];
     final dates = <DateTime>[];
-    var check = DateTime.now().add(const Duration(days: 1));
+    final now = DateTime.now();
+    const cutoffHour = 12; // noon
+    var check = DateTime(now.year, now.month, now.day);
     while (dates.length < 8) {
       final currentDay = check.weekday % 7;
-      if (targetDays.contains(currentDay)) dates.add(check);
-      check = check.add(const Duration(days: 1));
+      if (targetDays.contains(currentDay)) {
+        // Cutoff is noon the day before
+        final cutoff = DateTime(check.year, check.month, check.day - 1, cutoffHour);
+        if (now.isBefore(cutoff)) dates.add(check);
+      }
+      check = DateTime(check.year, check.month, check.day + 1);
     }
     return dates;
   }
