@@ -552,17 +552,40 @@ class _DriverOrderDetailScreenState
                             'Crate Subtotal',
                             '\$${((delivery.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
                           ),
-                          if ((delivery.pendingCrate!['credit'] as num?)?.toDouble() != null &&
-                              (delivery.pendingCrate!['credit'] as num).toDouble() > 0)
-                            _buildPriceRow(
-                              'Water Test Credit',
-                              '− \$${(delivery.pendingCrate!['credit'] as num).toDouble().toStringAsFixed(2)}',
-                            ),
                           _buildPriceRow(
                             'HST (13%)',
                             '\$${((delivery.pendingCrate!['hst'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
                           ),
                           Divider(height: 16.h),
+                          _buildPriceRow(
+                            'Total Amount',
+                            '\$${(((delivery.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0) + ((delivery.pendingCrate!['hst'] as num?)?.toDouble() ?? 0)).toStringAsFixed(2)}',
+                            isBold: true,
+                          ),
+                          if ((delivery.pendingCrate!['credit'] as num?)?.toDouble() != null &&
+                              (delivery.pendingCrate!['credit'] as num).toDouble() > 0)
+                            _buildPriceRow(
+                              'Water Test Credit (incl. HST)',
+                              '− \$${(delivery.pendingCrate!['credit'] as num).toDouble().toStringAsFixed(2)}',
+                            ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.h),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                return Row(
+                                  children: List.generate(
+                                    (constraints.maxWidth / 8).floor(),
+                                    (i) => Expanded(
+                                      child: Container(
+                                        height: 1,
+                                        color: (i % 2 == 0) ? Colors.grey.shade300 : Colors.transparent,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                           _buildPriceRow(
                             'Crate Total',
                             '\$${((delivery.pendingCrate!['total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',

@@ -138,7 +138,7 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
                 ? PaymentSheetGooglePay(
                     merchantCountryCode: 'CA',
                     currencyCode: googlePayCurrency,
-                    testEnv: true,
+                    testEnv: false,
                   )
                 : null,
             billingDetails: const BillingDetails(
