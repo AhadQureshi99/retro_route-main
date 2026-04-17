@@ -295,16 +295,15 @@ class OrderDetailsScreen extends StatelessWidget {
                     isBold: true),
                   if ((order.pendingCrate?['credit'] as num?)?.toDouble() != null &&
                       (order.pendingCrate!['credit'] as num).toDouble() > 0)
-                    _buildColoredPriceRow("Previously Paid Water Test", -(order.pendingCrate!['credit'] as num).toDouble(), const Color(0xFFE65100)),
+                    _buildColoredPriceRow("Water Test Credit (incl. HST)", -(order.pendingCrate!['credit'] as num).toDouble(), const Color(0xFFE65100)),
                   Divider(height: 24.h),
                   _buildPriceRow("Difference Paid", _crateTotal(order), isBold: true),
                   SizedBox(height: 8.h),
                   // Previously paid items from original order
                   ...order.products.map((p) {
                     final name = p.productId.name;
-                    final price = p.priceAtPurchase > 0 ? p.priceAtPurchase : p.productId.price;
                     final qty = p.quantity;
-                    return _buildPriceRow("Previously Paid: $name x$qty", price * qty);
+                    return _buildPriceRow("Previously Paid: $name x$qty", order.total);
                   }),
                   Divider(height: 24.h),
                   _buildPriceRow("Total Paid", _combinedTotal(order), isBold: true),
