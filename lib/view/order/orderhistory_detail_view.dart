@@ -298,30 +298,15 @@ class OrderDetailsScreen extends StatelessWidget {
                     _buildColoredPriceRow("Previously Paid Water Test", -(order.pendingCrate!['credit'] as num).toDouble(), const Color(0xFFE65100)),
                   Divider(height: 24.h),
                   _buildPriceRow("Difference Paid", _crateTotal(order), isBold: true),
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return Column(
-                          children: [
-                            Row(
-                              children: List.generate(
-                                (constraints.maxWidth / 4).floor(),
-                                (i) => Expanded(child: Container(height: 1.5, color: Colors.grey.shade400)),
-                              ),
-                            ),
-                            SizedBox(height: 2.h),
-                            Row(
-                              children: List.generate(
-                                (constraints.maxWidth / 4).floor(),
-                                (i) => Expanded(child: Container(height: 1.5, color: Colors.grey.shade400)),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
+                  SizedBox(height: 8.h),
+                  // Previously paid items from original order
+                  ...order.products.map((p) {
+                    final name = p.productId.name;
+                    final price = p.priceAtPurchase > 0 ? p.priceAtPurchase : p.productId.price;
+                    final qty = p.quantity;
+                    return _buildPriceRow("Previously Paid: $name x$qty", price * qty);
+                  }),
+                  Divider(height: 24.h),
                   _buildPriceRow("Total Paid", _combinedTotal(order), isBold: true),
                 ] else ...[
                   _buildPriceRow("Products Subtotal", order.subtotal),
