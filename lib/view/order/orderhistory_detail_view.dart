@@ -281,24 +281,59 @@ class OrderDetailsScreen extends StatelessWidget {
               verticalSpacer(height: 16),
             ],
 
-            // Price Breakdown
+            // Payment Summary
             _buildInfoCard(
-              title: "Price Breakdown",
+              title: "Payment Summary",
               children: [
-                _buildPriceRow("Subtotal", order.subtotal),
-                if (order.waterTestDiscount > 0) ...[                  
-                  _buildColoredPriceRow("Water Test Discount", -order.waterTestDiscount, const Color(0xFFE65100)),
-                  _buildPriceRow("After Discount", (order.subtotal - order.waterTestDiscount).clamp(0, double.infinity), isBold: true),
-                ],
-                if (order.deliveryCharges > 0)
-                  _buildPriceRow("Delivery Charges", order.deliveryCharges),
-                _buildPriceRow("Tax (HST 13%)", order.hst),
-                Divider(height: 24.h),
-                _buildPriceRow("Total", order.total, isBold: true),
-                if (_crateTotal(order) > 0) ...[                  
-                  _buildPriceRow("Crate Total", _crateTotal(order), isBold: true),
+                if (_crateTotal(order) > 0) ...[
+                  _buildPriceRow("Products Subtotal", (order.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0),
+                  _buildPriceRow("HST (13%)", (order.pendingCrate!['hst'] as num?)?.toDouble() ?? 0),
                   Divider(height: 24.h),
-                  _buildPriceRow("Combined Total", _combinedTotal(order), isBold: true),
+                  _buildPriceRow("Products Total",
+                    ((order.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0) +
+                    ((order.pendingCrate!['hst'] as num?)?.toDouble() ?? 0),
+                    isBold: true),
+                  if ((order.pendingCrate?['credit'] as num?)?.toDouble() != null &&
+                      (order.pendingCrate!['credit'] as num).toDouble() > 0)
+                    _buildColoredPriceRow("Previously Paid Water Test", -(order.pendingCrate!['credit'] as num).toDouble(), const Color(0xFFE65100)),
+                  Divider(height: 24.h),
+                  _buildPriceRow("Difference Paid", _crateTotal(order), isBold: true),
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Column(
+                          children: [
+                            Row(
+                              children: List.generate(
+                                (constraints.maxWidth / 4).floor(),
+                                (i) => Expanded(child: Container(height: 1.5, color: Colors.grey.shade400)),
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Row(
+                              children: List.generate(
+                                (constraints.maxWidth / 4).floor(),
+                                (i) => Expanded(child: Container(height: 1.5, color: Colors.grey.shade400)),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                  _buildPriceRow("Total Paid", _combinedTotal(order), isBold: true),
+                ] else ...[
+                  _buildPriceRow("Products Subtotal", order.subtotal),
+                  if (order.waterTestDiscount > 0) ...[
+                    _buildColoredPriceRow("Water Test Discount", -order.waterTestDiscount, const Color(0xFFE65100)),
+                    _buildPriceRow("After Discount", (order.subtotal - order.waterTestDiscount).clamp(0, double.infinity), isBold: true),
+                  ],
+                  if (order.deliveryCharges > 0)
+                    _buildPriceRow("Delivery Charges", order.deliveryCharges),
+                  _buildPriceRow("HST 13%", order.hst),
+                  Divider(height: 24.h),
+                  _buildPriceRow("Products Total", order.total, isBold: true),
                 ],
               ],
             ),
