@@ -309,7 +309,7 @@ class _OrderCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                       customText(
-                        text: "\$${order.total.toStringAsFixed(2)}",
+                        text: "\$${_combinedTotal(order).toStringAsFixed(2)}",
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
@@ -380,4 +380,14 @@ class _OrderCard extends StatelessWidget {
         return Colors.grey;
     }
   }
+
+  double _crateTotal(Order order) {
+    final crate = order.pendingCrate;
+    if (crate == null) return 0;
+    final status = crate['status']?.toString() ?? '';
+    if (!['approved', 'paid', 'delivered'].contains(status)) return 0;
+    return (crate['total'] as num?)?.toDouble() ?? 0;
+  }
+
+  double _combinedTotal(Order order) => order.total + _crateTotal(order);
 }

@@ -346,15 +346,15 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             ),
             verticalSpacer(height: 10),
             SizedBox(
-              height: 300.h,
+              height: 340.w,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: products.length,
-                separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                separatorBuilder: (_, __) => SizedBox(width: 4.w),
                 itemBuilder: (context, index) {
                   final product = products[index];
                   return SizedBox(
-                    width: 175.w,
+                    width: 200.w,
                     child: ProductCard(
                       product: product,
                       onTap: () {

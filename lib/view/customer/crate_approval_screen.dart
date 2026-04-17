@@ -61,6 +61,10 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
       final newQty = ((_items[index]['qty'] as num?)?.toInt() ?? 1) + delta;
       if (newQty <= 0) {
         _items.removeAt(index);
+        _enabled = _enabled
+            .where((i) => i != index)
+            .map((i) => i > index ? i - 1 : i)
+            .toSet();
       } else {
         _items[index] = {..._items[index], 'qty': newQty};
       }
