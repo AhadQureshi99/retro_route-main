@@ -497,7 +497,7 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
                   icon: Icons.receipt_long,
                   children: [
                     _buildPriceRow(
-                      'Crate Subtotal',
+                      'Crate Items Subtotal',
                       '\$${((widget.delivery.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
                     ),
                     _buildPriceRow(
@@ -506,7 +506,7 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
                     ),
                     Divider(height: 16.h, color: DriverColors.bg),
                     _buildPriceRow(
-                      'Total Amount',
+                      'Total Before Credit',
                       '\$${(((widget.delivery.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0) + ((widget.delivery.pendingCrate!['hst'] as num?)?.toDouble() ?? 0)).toStringAsFixed(2)}',
                       isBold: true,
                       valueColor: DriverColors.green,
@@ -537,7 +537,7 @@ class _DriverDeliverScreenState extends ConsumerState<DriverDeliverScreen> {
                       ),
                     ),
                     _buildPriceRow(
-                      'Crate Total',
+                      'Total Paid',
                       '\$${((widget.delivery.pendingCrate!['total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
                       isBold: true,
                       valueColor: DriverColors.green,

@@ -250,10 +250,10 @@ class OrderDetailsScreen extends StatelessWidget {
                   }),
                   // Crate price breakdown
                   Divider(height: 16.h),
-                  _buildPriceRow("Crate Subtotal", (order.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0),
+                  _buildPriceRow("Crate Items Subtotal", (order.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0),
                   _buildPriceRow("HST (13%)", (order.pendingCrate!['hst'] as num?)?.toDouble() ?? 0),
                   Divider(height: 16.h),
-                  _buildPriceRow("Total Amount", ((order.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0) + ((order.pendingCrate!['hst'] as num?)?.toDouble() ?? 0), isBold: true),
+                  _buildPriceRow("Total Before Credit", ((order.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0) + ((order.pendingCrate!['hst'] as num?)?.toDouble() ?? 0), isBold: true),
                   if ((order.pendingCrate!['credit'] as num?)?.toDouble() != null &&
                       (order.pendingCrate!['credit'] as num).toDouble() > 0)
                     _buildColoredPriceRow("Water Test Credit (incl. HST)", -(order.pendingCrate!['credit'] as num).toDouble(), const Color(0xFFE65100)),
@@ -275,7 +275,7 @@ class OrderDetailsScreen extends StatelessWidget {
                       },
                     ),
                   ),
-                  _buildPriceRow("Crate Total", (order.pendingCrate!['total'] as num?)?.toDouble() ?? 0, isBold: true),
+                  _buildPriceRow("Total Paid", (order.pendingCrate!['total'] as num?)?.toDouble() ?? 0, isBold: true),
                 ],
               ),
               verticalSpacer(height: 16),

@@ -549,7 +549,7 @@ class _DriverOrderDetailScreenState
                           }),
                           Divider(height: 16.h),
                           _buildPriceRow(
-                            'Crate Subtotal',
+                            'Crate Items Subtotal',
                             '\$${((delivery.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
                           ),
                           _buildPriceRow(
@@ -558,7 +558,7 @@ class _DriverOrderDetailScreenState
                           ),
                           Divider(height: 16.h),
                           _buildPriceRow(
-                            'Total Amount',
+                            'Total Before Credit',
                             '\$${(((delivery.pendingCrate!['subtotal'] as num?)?.toDouble() ?? 0) + ((delivery.pendingCrate!['hst'] as num?)?.toDouble() ?? 0)).toStringAsFixed(2)}',
                             isBold: true,
                           ),
@@ -587,7 +587,7 @@ class _DriverOrderDetailScreenState
                             ),
                           ),
                           _buildPriceRow(
-                            'Crate Total',
+                            'Total Paid',
                             '\$${((delivery.pendingCrate!['total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}',
                             isBold: true,
                           ),

@@ -82,9 +82,8 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
       .fold<int>(0, (s, e) => s + ((e.value['qty'] as num?)?.toInt() ?? 1));
 
   double get _waterTestFee => 0.0; // Water test fee is never added on crate screen
-  double get _afterCredit => (_crateCredit > 0) ? (_subtotal - _crateCredit).clamp(0, double.infinity) : _subtotal;
-  double get _hst => _afterCredit * 0.13;
-  double get _total => _afterCredit + _hst;
+  double get _hst => _subtotal * 0.13;
+  double get _total => (_subtotal + _hst - _crateCredit).clamp(0, double.infinity);
 
   Future<void> _approve() async {
     if (_approving) return;
@@ -557,27 +556,41 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
                               ),
                               child: Column(
                                 children: [
-                                  _priceRow('Products (×$_enabledCount)', '\$${_subtotal.toStringAsFixed(2)}'),
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                                    child: Divider(height: 1, color: Colors.grey.shade300),
-                                  ),
-                                  if (_crateCredit > 0)
-                                    _priceRow(
-                                      'Water Test Credit (incl. HST)',
-                                      '-\$${_crateCredit.toStringAsFixed(2)}',
-                                      valueColor: const Color(0xFF2E7D32),
-                                    ),
-                                  _priceRow('Subtotal', '\$${_afterCredit.toStringAsFixed(2)}'),
+                                  _priceRow('Crate Items Subtotal', '\$${_subtotal.toStringAsFixed(2)}'),
                                   _priceRow('HST (13%)', '\$${_hst.toStringAsFixed(2)}'),
                                   Padding(
                                     padding: EdgeInsets.symmetric(vertical: 8.h),
                                     child: Divider(height: 1, color: Colors.grey.shade300),
                                   ),
+                                  _priceRow('Total Before Credit', '\$${(_subtotal + _hst).toStringAsFixed(2)}', isBold: true),
+                                  if (_crateCredit > 0)
+                                    _priceRow(
+                                      'Water Test Credit (incl. HST)',
+                                      '-\$${_crateCredit.toStringAsFixed(2)}',
+                                      valueColor: const Color(0xFFE65100),
+                                    ),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        return Row(
+                                          children: List.generate(
+                                            (constraints.maxWidth / 8).floor(),
+                                            (i) => Expanded(
+                                              child: Container(
+                                                height: 1,
+                                                color: (i % 2 == 0) ? Colors.grey.shade300 : Colors.transparent,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text('Total Due Today',
+                                      Text('Total Paid',
                                           style: GoogleFonts.inter(
                                               fontSize: 15.sp,
                                               fontWeight: FontWeight.w800,
@@ -664,19 +677,19 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
     );
   }
 
-  Widget _priceRow(String label, String value, {Color? valueColor}) {
+  Widget _priceRow(String label, String value, {Color? valueColor, bool isBold = false}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 3.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: GoogleFonts.inter(fontSize: 13.sp, fontWeight: FontWeight.w500, color: Colors.grey[600])),
+              style: GoogleFonts.inter(fontSize: 13.sp, fontWeight: isBold ? FontWeight.w800 : FontWeight.w500, color: isBold ? Colors.grey[900] : Colors.grey[600])),
           Text(value,
               style: GoogleFonts.inter(
                   fontSize: 13.sp,
-                  fontWeight: FontWeight.w700,
-                  color: valueColor ?? Colors.grey[800])),
+                  fontWeight: isBold ? FontWeight.w800 : FontWeight.w700,
+                  color: valueColor ?? (isBold ? Colors.grey[900] : Colors.grey[800]))),
         ],
       ),
     );
