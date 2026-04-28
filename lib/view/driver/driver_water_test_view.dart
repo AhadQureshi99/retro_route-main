@@ -29,7 +29,7 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
   double? _volumeLiters;
   final TextEditingController _customVolCtrl = TextEditingController();
   String? _lastDrain;
-  bool _isFirstVisit = true;
+  bool _isFirstVisit = false;
 
   // ── Step 1: Sanitizer ──
   late String _sanitizerType;
@@ -161,6 +161,27 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
   }
 
   void _generateCrate() {
+    // View-level guard: require at least one chemical value OR one visual check
+    final hasAnyValue = _ctrls.values.any((c) => c.text.trim().isNotEmpty && double.tryParse(c.text.trim()) != null);
+    final hasAnyVisualCheck = _foam || _cloudy || _filterDirty || _scale || _flush || _algae;
+    if (!hasAnyValue && !hasAnyVisualCheck) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('No Data Entered'),
+          content: const Text(
+              'Please enter at least one water test reading or select a visual issue to generate product recommendations.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final results = <String, double?>{};
     for (final entry in _ctrls.entries) {
       results[entry.key] = double.tryParse(entry.value.text);
@@ -196,6 +217,24 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
       isFirstVisit: _isFirstVisit,
     );
     ref.read(driverDeliveriesProvider.notifier).setWaterTestResult(wt);
+    final generatedCrate = ref.read(driverDeliveriesProvider).generatedCrate;
+    if (generatedCrate.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('No Products Needed'),
+          content: const Text(
+              'All water test values are within range and no visual issues were found. No products need to be recommended.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
     context.push(AppRoutes.driverCrate, extra: widget.delivery);
   }
 
@@ -690,6 +729,7 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
         _visualToggle('🔧', 'Filter Dirty', 'Triggers: Cartridge Cleaner', _filterDirty, (v) => setState(() => _filterDirty = v)),
         _visualToggle('🚿', 'Needs Flush / Drain', 'Triggers: Flush + Pre-Filter', _flush, (v) => setState(() => _flush = v)),
         _visualToggle('⚖️', 'Scale Buildup', isPool ? 'Triggers: Stain Preventer' : 'Triggers: Stain&Scale + Cover Cleaner', _scale, (v) => setState(() => _scale = v)),
+        _visualToggle('🌟', 'First Visit (New Customer)', 'Triggers: Floating Dispenser starter kit', _isFirstVisit, (v) => setState(() => _isFirstVisit = v)),
         SizedBox(height: 24.h),
         SizedBox(
           width: double.infinity, height: 52.h,

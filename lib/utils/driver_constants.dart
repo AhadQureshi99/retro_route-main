@@ -198,6 +198,13 @@ class AutoCrateLogic {
   }) {
     final List<Map<String, dynamic>> crate = [];
 
+    // If no chemical values were entered at all, return empty crate — nothing to recommend
+    final hasAnyChemicalValue = results.values.any((v) => v != null);
+    final hasAnyVisual = hasFoam || isCloudy || filterDirty || needsFlush || hasScale || hasAlgae;
+    if (!hasAnyChemicalValue && !hasAnyVisual) {
+      return crate;
+    }
+
     // For 'both', determine which rules to use based on volume
     // Hot tub volumes are ≤2500L, pool volumes are ≥15000L
     final effectiveType = poolType == 'both'
