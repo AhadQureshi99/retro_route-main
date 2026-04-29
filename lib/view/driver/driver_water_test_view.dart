@@ -498,14 +498,20 @@ class _DriverWaterTestScreenState extends ConsumerState<DriverWaterTestScreen> {
         decoration: BoxDecoration(
           color: selected ? (isWarning ? const Color(0xFFFAEAED) : const Color(0xFFE8F4F6)) : AppColors.cardBgColor,
           border: Border.all(
-            color: selected ? (isWarning ? const Color(0xFF9C2B3A) : const Color(0xFF2C6E7A)) : (isWarning ? const Color(0xFF9C2B3A).withOpacity(0.4) : Colors.grey.shade300),
+            color: selected
+                ? (isWarning ? const Color(0xFF9C2B3A) : const Color(0xFF2C6E7A))
+                : Colors.grey.shade300,
             width: selected ? 2 : 1.5,
           ),
           borderRadius: BorderRadius.circular(8.r),
         ),
         child: Text(label, textAlign: TextAlign.center,
-            style: GoogleFonts.inter(fontSize: 11.sp, fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: isWarning ? const Color(0xFF9C2B3A) : (selected ? const Color(0xFF2C6E7A) : Colors.grey[700]))),
+            style: GoogleFonts.inter(
+                fontSize: 11.sp,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected
+                    ? (isWarning ? const Color(0xFF9C2B3A) : const Color(0xFF2C6E7A))
+                    : Colors.grey[700])),
       ),
     );
   }
