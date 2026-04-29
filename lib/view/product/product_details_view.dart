@@ -788,30 +788,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                       ],
                                     ),
                                   ),
-                                                             '\$${sizeObj.price.toStringAsFixed(2)}',
-                        Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 14.w,
-                                  vertical: 10.h,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xfff0f9ff),
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  border: Border.all(
-                                    color: AppColors.btnColor,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Text(
-                                  product.unit!,
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.btnColor,
-                                  ),
-                                ),
-                              ),
-                            ],
+                              )
+                          .toList()
+                          : [],
                     ),
                     SizedBox(height: 20.h),
                   ],
