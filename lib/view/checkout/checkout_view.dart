@@ -728,7 +728,7 @@ log('✅ Google Pay Supported: $googlePaySupported');
                         
                           merchantCountryCode: 'CA',
                           currencyCode: googlePayCurrency,
-                          testEnv: false,
+                          testEnv: true,
                     
                         )
                       : null,

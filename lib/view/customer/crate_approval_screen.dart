@@ -110,7 +110,7 @@ class _CrateApprovalScreenState extends ConsumerState<CrateApprovalScreen> {
         return;
       }
 
-      final isStripeTestMode = false;
+      final isStripeTestMode = true;
       final googlePayCurrency =
           (result['currency']?.toString().trim().isNotEmpty ?? false)
               ? result['currency'].toString().trim().toUpperCase()

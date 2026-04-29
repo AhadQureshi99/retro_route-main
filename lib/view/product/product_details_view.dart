@@ -776,7 +776,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                         ),
                                         if (sizeObj.price > 0)
                                           Text(
-                                            '\$${sizeObj.price.toStringAsFixed(2)}',
+                                            '\$${(sizeObj.price * (1 - (product.discount ?? 0) / 100)).toStringAsFixed(2)}',
                                             style: TextStyle(
                                               fontSize: 11.sp,
                                               fontWeight: FontWeight.w500,
@@ -788,11 +788,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                       ],
                                     ),
                                   ),
-                                ),
-                              )
-                              .toList()
-                          : [
-                              Container(
+                                                             '\$${sizeObj.price.toStringAsFixed(2)}',
+                        Container(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 14.w,
                                   vertical: 10.h,
