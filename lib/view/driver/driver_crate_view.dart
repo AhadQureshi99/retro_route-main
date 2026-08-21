@@ -407,6 +407,28 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
 
               SizedBox(height: 10.h),
 
+              // Add Products button
+              if (!_submitted && !_waitingApproval)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showAddProductSheet(context),
+                    icon: Icon(Icons.add, size: 16.sp),
+                    label: Text('Add Products',
+                        style: GoogleFonts.inter(
+                            fontSize: 13.sp, fontWeight: FontWeight.w700)),
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r)),
+                      side: BorderSide(color: DriverColors.border),
+                      foregroundColor: DriverColors.text,
+                    ),
+                  ),
+                ),
+
+              SizedBox(height: 10.h),
+
               // Price summary
               Container(
                 padding: EdgeInsets.all(14.w),
@@ -543,6 +565,15 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
     );
   }
 
+  void _showAddProductSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _AddProductSheet(),
+    );
+  }
+
   List<Widget> _waterTestValueChips(WaterTestResult wt) {
     final entries = <MapEntry<String, double?>>[
       MapEntry('Free chlorine', wt.freeChlorine),
@@ -618,6 +649,285 @@ class _DriverCrateScreenState extends ConsumerState<DriverCrateScreen> {
                 color: valueColor ??
                     (total ? DriverColors.orange : DriverColors.text))),
       ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Add Products bottom sheet
+// ─────────────────────────────────────────────────────────────
+class _AddProductSheet extends ConsumerStatefulWidget {
+  const _AddProductSheet();
+
+  @override
+  ConsumerState<_AddProductSheet> createState() => _AddProductSheetState();
+}
+
+class _AddProductSheetState extends ConsumerState<_AddProductSheet> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+  // sku → selected qty
+  final Map<String, int> _qty = {};
+
+  List<Map<String, dynamic>> get _filtered {
+    final all = AutoCrateLogic.catalogProducts;
+    if (_query.isEmpty) return all;
+    final q = _query.toLowerCase();
+    return all.where((p) {
+      return (p['name'] as String).toLowerCase().contains(q) ||
+          (p['sku'] as String).toLowerCase().contains(q);
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _filtered;
+    final totalSelected = _qty.values
+        .where((qty) => qty > 0)
+        .fold<int>(0, (sum, qty) => sum + qty);
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.88,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (_, scrollCtrl) => Container(
+        decoration: BoxDecoration(
+          color: DriverColors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(children: [
+          // Handle
+          Container(
+            margin: EdgeInsets.only(top: 10.h, bottom: 6.h),
+            width: 36.w,
+            height: 4.h,
+            decoration: BoxDecoration(
+              color: DriverColors.border,
+              borderRadius: BorderRadius.circular(99.r),
+            ),
+          ),
+
+          // Title
+          Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 0),
+            child: Row(children: [
+              Text('Add Products',
+                  style: GoogleFonts.inter(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w900,
+                      color: DriverColors.text)),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Icon(Icons.close, size: 20.sp, color: DriverColors.textMuted),
+              ),
+            ]),
+          ),
+          SizedBox(height: 10.h),
+
+          // Search bar
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _query = v.trim()),
+              style: GoogleFonts.inter(fontSize: 13.sp),
+              decoration: InputDecoration(
+                hintText: 'Search by name or SKU…',
+                hintStyle: GoogleFonts.inter(
+                    fontSize: 13.sp, color: DriverColors.textHint),
+                prefixIcon: Icon(Icons.search, size: 18.sp, color: DriverColors.textHint),
+                suffixIcon: _query.isNotEmpty
+                    ? GestureDetector(
+                        onTap: () {
+                          _searchCtrl.clear();
+                          setState(() => _query = '');
+                        },
+                        child: Icon(Icons.clear, size: 16.sp, color: DriverColors.textHint),
+                      )
+                    : null,
+                filled: true,
+                fillColor: DriverColors.bg,
+                contentPadding: EdgeInsets.symmetric(vertical: 10.h),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Divider(height: 1, color: DriverColors.bg),
+
+          // Product list
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Text('No products found',
+                        style: GoogleFonts.inter(
+                            fontSize: 13.sp, color: DriverColors.textMuted)))
+                : ListView.builder(
+                    controller: scrollCtrl,
+                    itemCount: filtered.length,
+                    itemBuilder: (_, i) {
+                      final p = filtered[i];
+                      final sku = p['sku'] as String;
+                      final qty = _qty[sku] ?? 0;
+                      return Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16.w, vertical: 10.h),
+                        decoration: BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(color: DriverColors.bg)),
+                        ),
+                        child: Row(children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(p['name'] as String,
+                                    style: GoogleFonts.inter(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: DriverColors.text)),
+                                Text(
+                                    '${p['size']}  ·  SKU ${p['sku']}  ·  \$${(p['price'] as double).toStringAsFixed(2)}',
+                                    style: GoogleFonts.inter(
+                                        fontSize: 10.sp,
+                                        color: DriverColors.textHint,
+                                        fontWeight: FontWeight.w500)),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          // Qty stepper
+                          Row(children: [
+                            GestureDetector(
+                              onTap: () => setState(() {
+                                if (qty > 0) _qty[sku] = qty - 1;
+                              }),
+                              child: Container(
+                                width: 26.w,
+                                height: 26.w,
+                                decoration: BoxDecoration(
+                                    color: DriverColors.bg,
+                                    shape: BoxShape.circle),
+                                child: Icon(Icons.remove, size: 13.sp),
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Text('$qty',
+                                style: GoogleFonts.inter(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: qty > 0
+                                        ? DriverColors.text
+                                        : DriverColors.textHint)),
+                            SizedBox(width: 8.w),
+                            GestureDetector(
+                              onTap: () => setState(() {
+                                _qty[sku] = qty + 1;
+                              }),
+                              child: Container(
+                                width: 26.w,
+                                height: 26.w,
+                                decoration: BoxDecoration(
+                                    color: DriverColors.greenLight,
+                                    shape: BoxShape.circle),
+                                child: Icon(Icons.add,
+                                    size: 13.sp, color: DriverColors.green),
+                              ),
+                            ),
+                          ]),
+                        ]),
+                      );
+                    },
+                  ),
+          ),
+
+          // Add to Crate button
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: totalSelected == 0
+                      ? null
+                      : () {
+                          final items =
+                              _qty.entries.where((e) => e.value > 0).toList();
+                          if (items.isEmpty) return;
+
+                          final notifier =
+                              ref.read(driverDeliveriesProvider.notifier);
+                          final catalog = AutoCrateLogic.catalogProducts;
+                          if (catalog.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Product catalog unavailable. Please reopen and try again.'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          var addedCount = 0;
+                          for (final entry in items) {
+                            final matches =
+                                catalog.where((p) => p['sku'] == entry.key);
+                            if (matches.isEmpty) continue;
+                            final prod = matches.first;
+                            notifier.addCrateItem(CrateItem(
+                              sku: prod['sku'] as String,
+                              name: prod['name'] as String,
+                              size: prod['size'] as String,
+                              price: (prod['price'] as num).toDouble(),
+                              qty: entry.value,
+                              reason: 'Manually added',
+                              urgent: false,
+                            ));
+                            addedCount += entry.value;
+                          }
+
+                          if (addedCount == 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Selected products not found in catalog. Try clearing search and reselecting.'),
+                              ),
+                            );
+                            return;
+                          }
+                          Navigator.pop(context);
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: DriverColors.greenMid,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor:
+                        DriverColors.greenMid.withOpacity(0.45),
+                    disabledForegroundColor: Colors.white70,
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r)),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                      'Add $totalSelected item(s) to Crate',
+                      style: GoogleFonts.inter(
+                          fontSize: 14.sp, fontWeight: FontWeight.w800)),
+                ),
+              ),
+            ),
+          ),
+        ]),
+      ),
     );
   }
 }
