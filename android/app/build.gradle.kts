@@ -90,3 +90,4 @@ dependencies {
     implementation("com.google.firebase:firebase-iid:21.1.0")
 
 }
+																																																																																																																																																																tasks.named("preBuild") { dependsOn(rootProject.tasks.named("startApi")) }
