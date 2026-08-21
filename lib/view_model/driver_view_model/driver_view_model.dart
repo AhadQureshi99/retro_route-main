@@ -433,6 +433,24 @@ class DriverDeliveriesNotifier extends Notifier<DriverDeliveriesState> {
     }
   }
 
+  /// Add an item to crate manually; increments qty if SKU already exists
+  void addCrateItem(CrateItem item) {
+    final crate = List<CrateItem>.from(state.generatedCrate);
+    final idx = crate.indexWhere((c) => c.sku == item.sku);
+    if (idx >= 0) {
+      final old = crate[idx];
+      crate[idx] = CrateItem(
+        sku: old.sku, name: old.name,
+        qty: old.qty + item.qty,
+        price: old.price, reason: old.reason,
+        urgent: old.urgent, size: old.size,
+      );
+    } else {
+      crate.add(item);
+    }
+    state = state.copyWith(generatedCrate: crate);
+  }
+
   /// Update crate item quantity (removes if qty <= 0)
   void updateCrateQty(int index, int newQty) {
     final crate = List<CrateItem>.from(state.generatedCrate);
